@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --text-color: #333;
+            --card-bg: rgba(0, 0, 0, 0.05);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --highlight: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --text-color: #e0e0e0;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --highlight: rgba(255, 255, 255, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+            color: var(--text-color);
+            background: transparent;
+            transition: color 0.3s;
+            user-select: none;
+            /* Prevent text selection while dragging */
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border-color);
+            opacity: 0.8;
+        }
+
+        /* Widget Sections */
+        .widget-section {
+            display: flex;
+            /* Or grid, but flex wrap is good for variable widths */
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 40px;
+            min-height: 100px;
+            /* target area for drop */
+            padding: 0px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .widget-section.drag-over {
+            background: var(--highlight);
+        }
+
+        /* Widget Styles */
+        .widget {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px;
+            width: 200px;
+            height: 200px;
+            min-width: 200px;
+            max-height: 200px;
+            /* Auto height based on content */
+            position: relative;
+            max-height: 400px;
+            /* Enforce max height */
+            /* resize: both; removed */
+            overflow: hidden;
+            transition: box-shadow 0.2s, transform 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .widget:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        [draggable="true"] {
+            cursor: grab;
+        }
+
+        [draggable="true"]:active {
+            cursor: grabbing;
+        }
+
+        .widget.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: grab;
+        }
+
+        /* Make Settings header clickable for navigation */
+        #widget-settings .widget-title {
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        #widget-settings .widget-title:hover {
+            opacity: 0.8;
+        }
+
+        .widget-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .widget-content {
+            flex: 1;
+            /* overflow: auto; removed optional scrolling if not resizing */
+            position: relative;
+        }
+
+        /* Clock Widget Specifics */
+        .clock-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .date-display {
+            text-align: center;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        /* Settings Widget Specifics */
+        .settings-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .settings-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #1a73e8;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(14px);
+        }
+
+        /* Analytics Widget Specifics */
+        .analytics-widget-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .aw-stats {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .aw-val {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #1a73e8;
+        }
+
+        .aw-lbl {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        .aw-charts {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            height: 150px;
+        }
+
+        .aw-chart-wrap {
+            flex: 1;
+            position: relative;
+            max-width: 150px;
+        }
+
+        /* Wide Widget */
+        .widget-wide {
+            /* flex-basis: 100%; Removed per fixed size request */
+        }
+
+        /* Redesigned Analytics Widget */
+        .aw-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .aw-score {
+            text-align: center;
+            margin-bottom: 2px;
+        }
+
+        .aw-score-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #5c6bc0;
+            /* Periwinkle/Blue from image */
+            line-height: 1;
+        }
+
+        .aw-score-lbl {
+            font-size: 0.7rem;
+            font-weight: 600;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        .aw-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .aw-card {
+            background: rgba(0, 0, 0, 0.2);
+            /* Darker card bg */
+            border-radius: 8px;
+            padding: 5px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        [data-theme="light"] .aw-card {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .aw-card-val {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #5c6bc0;
+            margin-bottom: 2px;
+        }
+
+        .aw-card-lbl {
+            font-size: 0.65rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>General</h2>
+    <div class="widget-section" id="general-section">
+        <!-- Modules Widget -->
+        <div class="widget" draggable="true" id="widget-modules">
+            <div class="widget-header">
+                <div class="widget-title" onclick="navigateToManager()" style="cursor:pointer"><i
+                        class="fas fa-th-large"></i> Applications</div>
+            </div>
+            <div class="widget-content">
+                <div style="font-size: 2rem; font-weight: bold; margin-bottom: 5px;" id="active-module-count">-</div>
+                <div style="font-size: 0.9rem; opacity: 0.7;">Active Modules</div>
+                <button
+                    style="margin-top: 10px; width: 100%; padding: 8px; border: none; background: rgba(0,0,0,0.05); color: inherit; border-radius: 6px; cursor: pointer;"
+                    onclick="navigateToManager()">Manage</button>
+            </div>
+        </div>
+        <!-- Clock Widget -->
+        <div class="widget" draggable="true" id="widget-clock">
+            <div class="widget-header">
+                <div class="widget-title"><i class="far fa-clock"></i> Clock</div>
+                <div class="widget-controls">
+                    <!-- Future controls -->
+                </div>
+            </div>
+            <div class="widget-content">
+                <div class="clock-display" id="clock-time">--:--</div>
+                <div class="date-display" id="clock-date">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Settings Widget -->
+        <div class="widget" draggable="true" id="widget-settings">
+            <div class="widget-header">
+                <div class="widget-title"><i class="fas fa-cog"></i> Settings</div>
+            </div>
+            <div class="widget-content">
+                <ul class="settings-list">
+                    <li class="settings-item">
+                        <span>Notifications</span>
+                        <label class="switch">
+                            <input type="checkbox" id="dash-check-notifications" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </li>
+                    <li class="settings-item">
+                        <span>Quick Actions</span>
+                        <label class="switch">
+                            <input type="checkbox" id="dash-check-quick-actions" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </li>
+                    <li class="settings-item">
+                        <span>Themes</span>
+                        <label class="switch">
+                            <input type="checkbox" id="dash-check-themes" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <h2>Applications</h2>
+    <div class="widget-section" id="modules-section">
+        <!-- Task Analytics Widget -->
+        <div class="widget widget-wide" draggable="true" id="widget-task-analytics">
+            <div class="widget-header">
+                <div class="widget-title" onclick="navigateToModule('task_manager')"
+                    style="cursor:pointer; text-decoration:none;"><i class="fas fa-chart-pie"></i> Task
+                    Manager</div>
+            </div>
+            <div class="widget-content analytics-widget-content" id="task-analytics-body">
+                <p style="text-align:center; opacity:0.6">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Story Studio Widget -->
+        <div class="widget" draggable="true" id="widget-stories">
+            <div class="widget-header">
+                <div class="widget-title" onclick="navigateToModule('story_studio')"
+                    style="cursor:pointer; text-decoration:none;"><i class="fas fa-book-open"></i> Story
+                    Studio</div>
+            </div>
+            <div class="widget-content"
+                style="display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; text-align:center;">
+                <div style="font-size: 2rem; font-weight: bold; color: #e91e63;" id="story-count-display">-</div>
+                <div style="font-size: 0.9rem; opacity: 0.7;">Recent Stories</div>
+                <button
+                    style="margin-top: 5px; width: 80%; padding: 6px; border: none; background: rgba(0,0,0,0.05); color: inherit; border-radius: 6px; cursor: pointer;"
+                    onclick="navigateToModule('story_studio')">Open Studio</button>
+            </div>
+        </div>
+
+        <!-- Notes Widget -->
+        <div class="widget" draggable="true" id="widget-notes">
+            <div class="widget-header">
+                <div class="widget-title" onclick="navigateToModule('notes')" style="cursor:pointer"><i
+                        class="fas fa-sticky-note"></i> Notes</div>
+            </div>
+            <div class="widget-content" id="notes-widget-body" style="overflow-y:auto;">
+                <p style="text-align:center; opacity:0.6; font-size:0.9rem;">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Study Tracker Widget -->
+        <div class="widget" draggable="true" id="widget-study">
+            <div class="widget-header">
+                <div class="widget-title" onclick="navigateToModule('study_tracker')" style="cursor:pointer"><i
+                        class="fas fa-graduation-cap"></i> Study Tracker</div>
+            </div>
+            <div class="widget-content" id="study-widget-body" style="overflow-y:auto; padding-top:5px;">
+                <p style="text-align:center; opacity:0.6; font-size:0.8rem;">Loading goals...</p>
+            </div>
+        </div>
+
+        <!-- Idea Vault Widget -->
+        <div class="widget" draggable="true" id="widget-ideas">
+            <div class="widget-header">
+                <div class="widget-title" onclick="navigateToModule('idea_vault')" style="cursor:pointer"><i
+                        class="fas fa-lightbulb"></i> Idea Vault</div>
+            </div>
+            <div class="widget-content"
+                style="text-align:center; display:flex; flex-direction:column; justify-content:center;">
+                <div style="font-size: 1.2rem; opacity:0.8;">2 Ideas stored</div>
+                <div style="font-size: 0.8rem; opacity:0.5; margin-top:5px;">Recent: App for pet...</div>
+            </div>
+        </div>
+
+        <!-- Event Manager Widget -->
+        <div class="widget" draggable="true" id="widget-events">
+            <div class="widget-header">
+                <div class="widget-title" onclick="navigateToModule('event_manager')" style="cursor:pointer"><i
+                        class="fas fa-calendar-alt"></i> Events</div>
+            </div>
+            <div class="widget-content" id="event-widget-body" style="padding-top:5px;">
+                <p style="text-align:center; opacity:0.6; font-size:0.8rem; padding-top:20px;">Loading events...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- DASHBOARD MODALS Removed (Moved to Global) -->
+
+    <script>
+        // --- Theme Logic ---
+        window.addEventListener('message', function (event) {
+            const data = event.data;
+            if (data.type === 'theme-change') {
+                document.documentElement.setAttribute('data-theme', data.theme);
+            } else if (data.type === 'sync-state') {
+                // Update toggles based on received state
+                if (data.state) {
+                    const toggles = {
+                        notifications: document.getElementById('dash-check-notifications'),
+                        quickActions: document.getElementById('dash-check-quick-actions'),
+                        themes: document.getElementById('dash-check-themes')
+                    };
+                    if (toggles.notifications) toggles.notifications.checked = data.state.visible_notifications;
+                    if (toggles.quickActions) toggles.quickActions.checked = data.state.visible_quick_actions;
+                    if (toggles.themes) toggles.themes.checked = data.state.visible_themes;
+                }
+            }
+        });
+
+        // Request initial state and theme
+        if (window.parent) {
+            window.parent.postMessage({ type: 'request-state' }, '*');
+            window.parent.postMessage({ type: 'request-theme' }, '*');
+        }
+
+        // Fetch Module Count
+        function updateModuleCount() {
+            // Modules Count
+            fetch('/api/modules')
+                .then(res => res.json())
+                .then(data => {
+                    const systemModules = ['dashboard', 'manager', 'settings'];
+                    const count = data.filter(m => m.enabled && !systemModules.includes(m.id)).length;
+                    const el = document.getElementById('active-module-count');
+                    if (el) el.textContent = count;
+                })
+                .catch(err => console.error(err));
+
+            // Stories Count
+            fetch('/api/storage/stories.json')
+                .then(res => res.json())
+                .then(data => {
+                    const el = document.getElementById('story-count-display');
+                    if (el && Array.isArray(data)) el.textContent = data.length;
+                })
+                .catch(err => {
+                    console.error(err);
+                    const el = document.getElementById('story-count-display');
+                    if (el) el.textContent = '-';
+                });
+        }
+        updateModuleCount();
+
+        function navigateToManager() {
+            navigateToModule('manager');
+        }
+
+        function navigateToModule(modName) {
+            if (window.parent) {
+                window.parent.postMessage({ type: 'navigate', module: modName }, '*');
+            }
+        }
+
+        // --- Sync Logic ---
+
+        // --- Sync Logic ---
+        const toggles = {
+            notifications: document.getElementById('dash-check-notifications'),
+            quickActions: document.getElementById('dash-check-quick-actions'),
+            themes: document.getElementById('dash-check-themes')
+        };
+
+        Object.entries(toggles).forEach(([key, element]) => {
+            if (element) {
+                element.addEventListener('change', (e) => {
+                    if (window.parent) {
+                        window.parent.postMessage({
+                            type: 'toggle-visibility',
+                            target: key,
+                            visible: e.target.checked
+                        }, '*');
+                    }
+                });
+            }
+        });
+
+        // --- Settings Navigation Logic ---
+        document.querySelector('#widget-settings .widget-title').addEventListener('click', () => {
+            if (window.parent) {
+                window.parent.postMessage({ type: 'navigate', module: 'settings' }, '*');
+            }
+        });
+
+        // --- Clock Logic ---
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateString = now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+
+            document.getElementById('clock-time').textContent = timeString;
+            document.getElementById('clock-date').textContent = dateString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- Drag and Drop Logic ---
+        const widgets = document.querySelectorAll('.widget');
+        const sections = document.querySelectorAll('.widget-section');
+
+        widgets.forEach(widget => {
+            widget.addEventListener('dragstart', () => {
+                widget.classList.add('dragging');
+            });
+
+            widget.addEventListener('dragend', () => {
+                widget.classList.remove('dragging');
+            });
+        });
+
+        sections.forEach(section => {
+            section.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                section.classList.add('drag-over');
+
+                const afterElement = getDragAfterElement(section, e.clientX, e.clientY);
+                const draggable = document.querySelector('.dragging');
+                if (afterElement == null) {
+                    section.appendChild(draggable);
+                } else {
+                    section.insertBefore(draggable, afterElement);
+                }
+            });
+
+            section.addEventListener('dragleave', () => {
+                section.classList.remove('drag-over');
+            });
+
+            section.addEventListener('drop', () => {
+                section.classList.remove('drag-over');
+                saveDashboardLayout();
+            });
+        });
+
+        // --- Layout Persistence ---
+        function saveDashboardLayout() {
+            const layout = {};
+            const sections = document.querySelectorAll('.widget-section');
+            sections.forEach(section => {
+                const widgetIds = [];
+                section.querySelectorAll('.widget').forEach(widget => {
+                    if (widget.id) {
+                        widgetIds.push(widget.id);
+                    }
+                });
+                layout[section.id] = widgetIds;
+            });
+
+            fetch('/api/storage/dashboard_layout.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: layout })
+            }).catch(e => console.error("Failed to save layout", e));
+        }
+
+        async function loadDashboardLayout() {
+            try {
+                const res = await fetch('/api/storage/dashboard_layout.json');
+                if (!res.ok) return; // No saved layout or error
+                const layout = await res.json();
+
+                if (!layout) return;
+
+                Object.entries(layout).forEach(([sectionId, widgetIds]) => {
+                    const section = document.getElementById(sectionId);
+                    if (section) {
+                        widgetIds.forEach(widgetId => {
+                            const widget = document.getElementById(widgetId);
+                            if (widget) {
+                                // Moving the element to the end of the section
+                                // Doing this in order sorts them
+                                section.appendChild(widget);
+                            }
+                        });
+                    }
+                });
+            } catch (e) {
+                console.error("Failed to load layout", e);
+            }
+        }
+
+        // Load layout on init
+        loadDashboardLayout();
+
+
+
+        async function updateNotesWidget() {
+            const container = document.getElementById('notes-widget-body');
+            try {
+                const res = await fetch('/api/storage/notes.json');
+                if (!res.ok) return;
+                const db = await res.json();
+
+                // Flatten
+                let allNotes = [];
+                if (db.folders) {
+                    db.folders.forEach(f => {
+                        if (f.notes) {
+                            f.notes.forEach(n => {
+                                allNotes.push({ ...n, folderName: f.name });
+                            });
+                        }
+                    });
+                }
+
+                // Sort by update
+                allNotes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+                // Top 3
+                const top3 = allNotes.slice(0, 3);
+
+                container.innerHTML = '';
+                if (top3.length === 0) {
+                    container.innerHTML = '<div style="opacity:0.5; font-size:0.8rem; text-align:center; padding-top:20px;">No notes yet</div>';
+                    return;
+                }
+
+                top3.forEach(n => {
+                    const div = document.createElement('div');
+                    div.style.padding = '8px 0';
+                    div.style.borderBottom = '1px solid var(--border-color)';
+                    div.style.cursor = 'pointer';
+                    div.onclick = () => navigateToModule('notes');
+
+                    div.innerHTML = `
+                        <div style="font-weight:600; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${n.title || 'Untitled'}</div>
+                        <div style="font-size:0.75rem; opacity:0.7;">${n.folderName} &bull; ${new Date(n.updatedAt).toLocaleDateString()}</div>
+                    `;
+                    container.appendChild(div);
+                });
+
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div style="color:red; font-size:0.8rem;">Error loading notes</div>';
+            }
+        }
+
+        async function updateStudyWidget() {
+            const container = document.getElementById('study-widget-body');
+            try {
+                const res = await fetch('/api/storage/study_data.json');
+                if (!res.ok) {
+                    container.innerHTML = '<div style="opacity:0.5; font-size:0.8rem; text-align:center; padding-top:20px;">No data</div>';
+                    return;
+                }
+                const db = await res.json();
+                const goals = db.goals || [];
+
+                // Filter pending/inprogress and Sort by targetDate ascending
+                const activeGoals = goals.filter(g => g.status !== 'Complete');
+                activeGoals.sort((a, b) => new Date(a.targetDate) - new Date(b.targetDate));
+
+                const top3 = activeGoals.slice(0, 3);
+
+                container.innerHTML = '';
+                if (top3.length === 0) {
+                    container.innerHTML = '<div style="opacity:0.5; font-size:0.8rem; text-align:center; padding-top:20px;">No active goals</div>';
+                    return;
+                }
+
+                top3.forEach(g => {
+                    // Resolve subject name
+                    const sub = (db.subjects || []).find(s => s.id === g.subjectId);
+                    const subName = sub ? sub.name : 'Unknown';
+
+                    const div = document.createElement('div');
+                    div.style.padding = '8px 0';
+                    div.style.borderBottom = '1px solid var(--border-color)';
+                    div.style.cursor = 'pointer';
+                    div.onclick = () => navigateToModule('study_tracker'); // Could deep link to goals?
+
+                    div.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:600; font-size:0.85rem; color:var(--accent);">${subName}</span>
+                            <span style="font-size:0.65rem; opacity:0.7;">${new Date(g.targetDate).toLocaleDateString()}</span>
+                        </div>
+                        <div style="font-size:0.8rem; opacity:0.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${g.description}</div>
+                    `;
+                    container.appendChild(div);
+                });
+
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div style="color:red; font-size:0.8rem;">Error loading goals</div>';
+            }
+        }
+        updateStudyWidget();
+
+        async function updateEventWidget() {
+            const container = document.getElementById('event-widget-body');
+            try {
+                const res = await fetch('/api/storage/event_manager.json');
+                if (!res.ok) {
+                    container.innerHTML = '<div style="opacity:0.5; font-size:0.8rem; text-align:center; padding-top:20px;">No events</div>';
+                    return;
+                }
+                let events = await res.json();
+                if (!Array.isArray(events)) events = [];
+
+                // Filter upcoming
+                const now = new Date();
+                const upcoming = events.filter(e => {
+                    if (!e.start || e.status === 'Cancelled') return false;
+                    return new Date(e.start) >= now;
+                });
+
+                // Sort by date asc
+                upcoming.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+                if (upcoming.length === 0) {
+                    container.innerHTML = '<div style="opacity:0.5; font-size:0.8rem; text-align:center; padding-top:20px;">No upcoming events</div>';
+                    return;
+                }
+
+                const nextEvent = upcoming[0];
+                const d = new Date(nextEvent.start);
+                const day = d.getDate();
+                const month = d.toLocaleString('default', { month: 'short' }).toUpperCase();
+                const time = nextEvent.allDay ? 'All Day' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                container.innerHTML = `
+                    <div style="text-align:center;">
+                        <div style="font-size:2rem; font-weight:bold; line-height:1; color:#e91e63;">${day}</div>
+                        <div style="font-size:0.8rem; font-weight:600; text-transform:uppercase;">${month}</div>
+                        <div style="margin-top:5px; font-weight:600; font-size:0.9rem;">${nextEvent.title}</div>
+                        <div style="font-size:0.8rem; opacity:0.7;">${time}</div>
+                    </div>
+                `;
+
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div style="color:red; font-size:0.8rem;">Error loading events</div>';
+            }
+        }
+        updateEventWidget();
+
+        async function updateIdeaWidget() {
+            const container = document.querySelector('#widget-ideas .widget-content');
+            if (!container) return;
+
+            try {
+                const res = await fetch('/api/storage/idea_vault.json');
+                if (!res.ok) {
+                    container.innerHTML = '<div style="opacity:0.5; font-size:0.8rem;">No ideas</div>';
+                    return;
+                }
+                const db = await res.json();
+                const ideas = db.ideas || [];
+
+                // Sort by created desc
+                ideas.sort((a, b) => new Date(b.created) - new Date(a.created));
+
+                const top3 = ideas.slice(0, 3);
+                const total = ideas.length;
+
+                if (total === 0) {
+                    container.innerHTML = '<div style="opacity:0.5; font-size:0.8rem;">No ideas stored</div>';
+                    return;
+                }
+
+                let html = `<div style="font-size: 1.2rem; opacity:0.8; font-weight:600; margin-bottom:10px;">${total} Ideas</div>
+                            <div style="display:flex; flex-direction:column; gap:5px; width:100%;">`;
+
+                top3.forEach(idea => {
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:2px;">
+                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70%;" title="${idea.title}">${idea.title}</span>
+                            <span style="font-size:0.7rem; opacity:0.6; background:rgba(0,0,0,0.1); padding:1px 4px; border-radius:4px;">${idea.stage}</span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+
+                container.innerHTML = html;
+
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div style="color:red; font-size:0.8rem;">Error</div>';
+            }
+        }
+        updateIdeaWidget();
+
+
+
+        // Init
+        updateNotesWidget();
+
+
+
+        // Overwriting getDragAfterElement with a more robust logic for 2D flex
+        // Finding the immediate next sibling based on cursor position
+        function getDragAfterElement(container, x, y) {
+            const draggables = [...container.querySelectorAll('.widget:not(.dragging)')]
+
+            return draggables.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+
+                // If we are strictly "before" this element in flow order?
+                // Visual order in flex wrap is Left->Right, Top->Bottom.
+                // We want the first element whose center is "after" the cursor.
+
+                // Is the cursor to the left of this box's center?
+                // And is the cursor roughly on the same row?
+
+                // Let's simplify: Check simple distance to center,
+                // but only consider elements that are "after" in 2D space?
+                // No, standard sortable libraries use simple proximity.
+
+                // Let's try the X-axis sort primarily since flex row is default
+                const offset = x - box.left - box.width / 2;
+                const offsetY = y - box.top - box.height / 2;
+
+                // We consider it a valid target if we are "behind" its horizontal center
+                // AND "behind" its vertical center (roughly)
+                // Actually, let's just use the classic vertical logic but adapted for X axis
+
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child }
+                } else {
+                    return closest
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element
+        }
+
+        // --- Task Analytics Logic ---
+        async function loadTaskAnalytics() {
+            const container = document.getElementById('task-analytics-body');
+            const widget = document.getElementById('widget-task-analytics');
+
+            try {
+                // Check if module is enabled
+                const modRes = await fetch('/api/modules');
+                if (modRes.ok) {
+                    const modules = await modRes.json();
+
+                    const widgets = {
+                        'task_manager': document.getElementById('widget-task-analytics'),
+                        'story_studio': document.getElementById('widget-stories'),
+                        'notes': document.getElementById('widget-notes'),
+                        'study_tracker': document.getElementById('widget-study'),
+                        'idea_vault': document.getElementById('widget-ideas'),
+                        'event_manager': document.getElementById('widget-events')
+                    };
+
+                    Object.entries(widgets).forEach(([modId, widget]) => {
+                        if (widget) {
+                            const mod = modules.find(m => m.id === modId);
+                            if (!mod || !mod.enabled) {
+                                widget.style.display = 'none';
+                            } else {
+                                widget.style.display = 'flex';
+                            }
+                        }
+                    });
+                }
+
+                // container.innerHTML = '<p style="text-align:center; opacity:0.6">Loading data...</p>';
+                // Note: The storage file might still be named tasks.json or task_manager.json depending on how the module saves it.
+                // Assuming the data file is still tasks.json for now as per previous context, or we might need to check.
+                // Let's try tasks.json first.
+                const res = await fetch('/api/storage/tasks.json');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                let tasks = await res.json();
+                if (!Array.isArray(tasks)) tasks = [];
+                renderTaskWidget(tasks);
+            } catch (e) {
+                console.error("Failed to load tasks for dashboard", e);
+                container.innerHTML = `<p style="text-align:center; color:red; font-size:0.8rem">Error: ${e.message}</p>`;
+            }
+        }
+
+        function renderTaskWidget(tasks) {
+            if (typeof Chart === 'undefined') {
+                document.getElementById('task-analytics-body').innerHTML = '<p style="text-align:center; color:red">Chart.js missing</p>';
+                return;
+            }
+
+            // Reusing Logic from Task Manager roughly
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.status === 'Completed').length;
+            const overdue = tasks.filter(t => t.status === 'Overdue').length;
+
+            // Calculate Due Today
+            const todayStr = new Date().toISOString().split('T')[0];
+            const dueToday = tasks.filter(t => t.dueDate === todayStr).length;
+
+            const score = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+            const statusDist = { 'ToDo': 0, 'InProgress': 0, 'Completed': 0, 'Overdue': 0 };
+            const priorityDist = { 'High': 0, 'Medium': 0, 'Low': 0 };
+            const categoryDist = {};
+
+            tasks.forEach(t => {
+                if (statusDist[t.status] !== undefined) statusDist[t.status]++;
+                if (priorityDist[t.priority] !== undefined) priorityDist[t.priority]++;
+                const cat = t.category || 'Other';
+                categoryDist[cat] = (categoryDist[cat] || 0) + 1;
+            });
+
+            const container = document.getElementById('task-analytics-body');
+            container.innerHTML = `
+        <div class="aw-container">
+            <div class="aw-score">
+                <div class="aw-score-val">${score}%</div>
+                <div class="aw-score-lbl">Productivity Score</div>
+            </div>
+            <div class="aw-grid">
+                <div class="aw-card">
+                    <div class="aw-card-val">${total}</div>
+                    <div class="aw-card-lbl">Total</div>
+                </div>
+                <div class="aw-card">
+                    <div class="aw-card-val" style="color:#4caf50">${completed}</div>
+                    <div class="aw-card-lbl">Completed</div>
+                </div>
+                <div class="aw-card">
+                    <div class="aw-card-val" style="color:#ff9800">${dueToday}</div>
+                    <div class="aw-card-lbl">Due Today</div>
+                </div>
+                <div class="aw-card">
+                    <div class="aw-card-val" style="color:#f44336">${overdue}</div>
+                    <div class="aw-card-lbl">Overdue</div>
+                </div>
+            </div>
+        </div>
+        `;
+
+        }
+
+        // Init
+        // Ensure DOM is ready and Chart is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadTaskAnalytics);
+        } else {
+            // Short delay to ensuring Chart.js script execution if racing
+            setTimeout(loadTaskAnalytics, 100);
+        }
+
+    </script>
+</body>
+
+</html>

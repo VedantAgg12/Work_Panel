@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --text-color: #333;
+            --bg-color: transparent;
+            --card-bg: rgba(255, 255, 255, 0.5);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --primary-color: #1a73e8;
+        }
+
+        [data-theme="dark"] {
+            --text-color: #e0e0e0;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+            color: var(--text-color);
+            background: var(--bg-color);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .module-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: transform 0.2s;
+        }
+
+        .module-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .module-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(26, 115, 232, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .module-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+        }
+
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #eee;
+            color: #666;
+        }
+
+        .status-badge.enabled {
+            background: rgba(76, 175, 80, 0.15);
+            color: #4caf50;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-family: inherit;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .btn-toggle {
+            background: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-toggle.active {
+            background: #f44336;
+            /* Red for disable */
+            color: white;
+        }
+
+        .btn-enable {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-manage {
+            background: var(--primary-color);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Applications Manager</h1>
+
+    <div class="modules-grid" id="grid">
+        <!-- Injected by JS -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadModules();
+
+            // Sync theme
+            if (window.parent) {
+                window.parent.postMessage({ type: 'request-theme' }, '*');
+            }
+            window.addEventListener('message', (e) => {
+                if (e.data.type === 'theme-change') {
+                    document.documentElement.setAttribute('data-theme', e.data.theme);
+                }
+            });
+        });
+
+        async function loadModules() {
+            try {
+                const res = await fetch('/api/modules');
+                const modules = await res.json();
+                renderModules(modules);
+            } catch (e) {
+                console.error("Failed to load modules", e);
+            }
+        }
+
+        function renderModules(modules) {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+
+            const hiddenModules = ['dashboard', 'settings', 'manager'];
+            const visibleModules = modules.filter(m => !hiddenModules.includes(m.id));
+
+            visibleModules.forEach(mod => {
+                const isEnabled = mod.enabled;
+                const toggleBtn = isEnabled
+                    ? `<button class="btn btn-toggle active" onclick="toggleModule('${mod.id}', false)">Disable</button>`
+                    : `<button class="btn btn-enable" onclick="toggleModule('${mod.id}', true)">Enable</button>`;
+
+                const manageBtn = `<button class="btn btn-manage" onclick="navigateTo('${mod.id}')">Open</button>`;
+
+                grid.innerHTML += `
+                    <div class="module-card">
+                        <div class="card-header">
+                            <div class="module-icon"><i class="fas ${mod.icon}"></i></div>
+                            <div class="module-info">
+                                <h3>${mod.name}</h3>
+                                <span class="status-badge ${isEnabled ? 'enabled' : ''}">${isEnabled ? 'Active' : 'Disabled'}</span>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            ${toggleBtn}
+                            ${isEnabled ? manageBtn : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function toggleModule(id, enable) {
+            try {
+                await fetch(`/api/modules/${id}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: enable })
+                });
+                // Reload UI
+                loadModules();
+                // Notify parent to refresh sidebar
+                // We'll just ask user to refresh for now or try to reload parent? 
+                // Parent reload is aggressive. Ideally parent has listener for module updates.
+                // Notify parent to refresh sidebar live
+                if (window.parent) {
+                    window.parent.postMessage({ type: 'module-toggled', module: id, enabled: enable }, '*');
+                }
+            } catch (e) {
+                console.error("Toggle failed", e);
+            }
+        }
+
+        function navigateTo(moduleId) {
+            if (window.parent) {
+                window.parent.postMessage({ type: 'navigate', module: moduleId }, '*');
+            }
+        }
+    </script>
+</body>
+
+</html>

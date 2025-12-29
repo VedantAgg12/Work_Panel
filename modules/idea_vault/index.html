@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idea Vault</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Actions -->
+        <div class="sidebar-section">
+            <div class="sidebar-title">Actions</div>
+            <button class="btn-sidebar btn-action" id="btn-new-idea">
+                <i class="fas fa-plus"></i> New Idea
+            </button>
+            <button class="btn-sidebar btn-action" id="btn-new-collection">
+                <i class="fas fa-folder-plus"></i> New Collection
+            </button>
+        </div>
+
+        <div style="border-bottom: 1px solid var(--border-color); margin: 5px 0;"></div>
+
+        <!-- Navigation -->
+        <div class="sidebar-section">
+            <div class="sidebar-title">Views</div>
+            <button class="btn-sidebar active" data-view="grid">
+                <i class="fas fa-th-large"></i> Grid View
+            </button>
+            <button class="btn-sidebar" data-view="list">
+                <i class="fas fa-list"></i> List View
+            </button>
+            <button class="btn-sidebar" data-view="mindmap">
+                <i class="fas fa-project-diagram"></i> Mind Map
+            </button>
+            <button class="btn-sidebar" data-view="collections">
+                <i class="fas fa-layer-group"></i> Collections
+            </button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Controls Bar -->
+        <div class="controls-header" id="controls-bar">
+            <!-- Grid Controls -->
+            <div id="grid-controls" style="display:block;">
+                <select id="filter-collection" class="control-select">
+                    <option value="all">All Collections</option>
+                    <!-- Populated -->
+                </select>
+            </div>
+
+            <!-- Map Controls -->
+            <div id="map-controls" style="display:none;">
+                <select id="select-root-node" class="control-select">
+                    <option value="all">All Trees</option>
+                    <!-- Populated -->
+                </select>
+            </div>
+        </div>
+
+        <div id="view-container">
+            <!-- Dynamic Content -->
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Idea Modal -->
+    <div class="modal" id="modal-idea">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 style="margin:0;">New Idea</h3>
+                <button class="close-modal" style="background:none; border:none; cursor:pointer; color:inherit;"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <form id="form-idea">
+                <input type="hidden" id="inp-parent-id"> <!-- For sub-ideas -->
+                <input type="hidden" id="inp-editing-id"> <!-- For editing existing -->
+
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:500;">Title</label>
+                    <input type="text" id="inp-idea-title" style="width:100%; padding:8px; border-radius:6px;" required>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <div style="flex:1;">
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">Stage</label>
+                        <select id="inp-idea-stage" style="width:100%; padding:8px; border-radius:6px;">
+                            <option value="Raw">Raw</option>
+                            <option value="Researching">Researching</option>
+                            <option value="Developing">Developing</option>
+                            <option value="Ready">Ready</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;">
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">Priority</label>
+                        <select id="inp-idea-priority" style="width:100%; padding:8px; border-radius:6px;">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:500;">Collection</label>
+                    <select id="inp-idea-collection" name="collection"
+                        style="width:100%; padding:8px; border-radius:6px;">
+                        <!-- JS populated -->
+                    </select>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:500;">Description</label>
+                    <textarea id="inp-idea-desc" rows="3"
+                        style="width:100%; padding:8px; border-radius:6px; resize:vertical;"></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <button type="button" id="btn-delete-idea"
+                        style="padding:8px 15px; border:1px solid #ff4444; background:transparent; color:#ff4444; border-radius:6px; cursor:pointer; display:none;">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                    <div>
+                        <button type="button" class="close-modal"
+                            style="padding:8px 15px; border:1px solid var(--border-color); background:transparent; color:inherit; border-radius:6px; margin-right:5px; cursor:pointer;">Cancel</button>
+                        <button type="submit"
+                            style="padding:8px 15px; border:none; background:#1a73e8; color:white; border-radius:6px; cursor:pointer;">Save
+                            Idea</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Collection Modal -->
+    <div class="modal" id="modal-collection">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 style="margin:0;">New Collection</h3>
+                <button class="close-modal" style="background:none; border:none; cursor:pointer; color:inherit;"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <form id="form-collection">
+                <input type="hidden" id="inp-col-editing-id">
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:500;">Name</label>
+                    <input type="text" id="inp-col-name" style="width:100%; padding:8px; border-radius:6px;" required>
+                </div>
+                <div style="text-align:right;">
+                    <button type="button" class="close-modal"
+                        style="padding:8px 15px; border:1px solid var(--border-color); background:transparent; color:inherit; border-radius:6px; margin-right:5px; cursor:pointer;">Cancel</button>
+                    <button type="submit"
+                        style="padding:8px 15px; border:none; background:#1a73e8; color:white; border-radius:6px; cursor:pointer;">Create
+                        Collection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workstation</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Google Fonts for premium feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Global Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-color, #fff);
+            /* Fallback */
+            padding: 25px;
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            color: var(--text-color, #333);
+        }
+
+        /* Specific for dark/light theme provided by base.html context if vars exist */
+        [data-theme="dark"] .modal-content {
+            background: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            background: transparent;
+            color: inherit;
+            font-family: inherit;
+        }
+
+        [data-theme="dark"] .form-control {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-modal {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            color: inherit;
+        }
+
+        [data-theme="dark"] .btn-outline {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        [data-theme="dark"] select option {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <button id="nav-toggle" class="icon-button" aria-label="Menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="app-title">Workstation</div>
+            </div>
+            <div class="header-right">
+                <button id="notification-toggle" class="icon-button" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button id="quick-action-toggle" class="icon-button" aria-label="Quick Actions">
+                    <i class="fas fa-bolt"></i>
+                </button>
+                <button id="theme-toggle" class="icon-button" aria-label="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Notification Popup -->
+        <div id="notification-popup" class="notification-popup">
+            <div class="notification-header">
+                <h3>Notifications</h3>
+            </div>
+            <div class="notification-list">
+                <div class="notification-item unread">
+                    <p>Welcome to Workstation!</p>
+                    <span class="time">Just now</span>
+                </div>
+                <div class="notification-item">
+                    <p>System updated successfully.</p>
+                    <span class="time">1 hour ago</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Drawer (Left) -->
+        <nav id="nav-drawer" class="drawer drawer-left">
+            <div class="drawer-header">
+                <h3>Menu</h3>
+                <button class="close-drawer"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="nav-section-title"
+                style="padding: 10px 20px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
+                General</div>
+            <ul class="nav-links" id="nav-general">
+                <li draggable="true" class="nav-item"><a href="#" class="nav-link active" data-module="dashboard"><i
+                            class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                {% for module in modules %}
+                {% if module.id == 'manager' or module.id == 'settings' %}
+                <li style="display: {{ 'block' if module.enabled else 'none' }}" draggable="true" class="nav-item">
+                    <a href="#" class="nav-link" data-module="{{ module.id }}"><i class="fas {{ module.icon }}"></i> {{
+                        module.name }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+
+            <div class="nav-section-title"
+                style="padding: 15px 20px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
+                Applications</div>
+            <ul class="nav-links" id="nav-apps">
+                {% for module in modules %}
+                {% if module.id != 'manager' and module.id != 'settings' %}
+                <li style="display: {{ 'block' if module.enabled else 'none' }}" draggable="true" class="nav-item">
+                    <a href="#" class="nav-link" data-module="{{ module.id }}"><i class="fas {{ module.icon }}"></i> {{
+                        module.name }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </nav>
+
+        <!-- Quick Actions Drawer (Left) -->
+        <aside id="quick-drawer" class="drawer drawer-left-secondary">
+            <div class="drawer-header">
+                <h3>Quick Actions</h3>
+                <button class="close-drawer"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="drawer-content">
+                <div id="qa-group-task" style="display:none">
+                    <div class="nav-section-title"
+                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
+                        Task Manager</div>
+                    <button class="quick-action-btn" id="qa-new-task" type="button">
+                        <i class="fas fa-plus"></i> New Task
+                    </button>
+                </div>
+
+                <div id="qa-group-story" style="display:none">
+                    <div class="nav-section-title"
+                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
+                        Story Studio</div>
+                    <button class="quick-action-btn" id="qa-new-story" type="button">
+                        <i class="fas fa-book"></i> New Story
+                    </button>
+                    <button class="quick-action-btn" id="qa-new-scene" type="button">
+                        <i class="fas fa-film"></i> New Scene
+                    </button>
+                    <button class="quick-action-btn" id="qa-new-element" type="button">
+                        <i class="fas fa-cube"></i> New Element
+                    </button>
+                </div>
+
+                <div id="qa-group-notes" style="display:none">
+                    <div class="nav-section-title"
+                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
+                        Notes</div>
+                    <button class="quick-action-btn" id="qa-new-note" type="button">
+                        <i class="fas fa-plus"></i> New Note
+                    </button>
+                    <button class="quick-action-btn" id="qa-new-folder" type="button">
+                        <i class="fas fa-folder-plus"></i> New Folder
+                    </button>
+                </div>
+
+                <div id="qa-group-study" style="display:none">
+                    <div class="nav-section-title"
+                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
+                        Study Tracker</div>
+                    <!-- Add Subject Removed -->
+                    <button class="quick-action-btn" id="qa-new-schedule" type="button">
+                        <i class="fas fa-calendar-plus"></i> Add Schedule
+                    </button>
+                    <button class="quick-action-btn" id="qa-new-goal" type="button">
+                        <i class="fas fa-bullseye"></i> Add Goal
+                    </button>
+                    <button class="quick-action-btn" id="qa-new-event" type="button">
+                        <i class="fas fa-calendar-check"></i> Add Event
+                    </button>
+                </div>
+
+                <div id="qa-group-idea" style="display:none">
+                    <div class="nav-section-title"
+                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
+                        Idea Vault</div>
+                    <button class="quick-action-btn" id="qa-new-idea" type="button">
+                        <i class="fas fa-lightbulb"></i> Quick Idea
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Overlay for drawers -->
+        <div id="drawer-overlay" class="overlay"></div>
+
+        <!-- Theme Selection Modal -->
+        <div id="theme-modal" class="modal-overlay">
+            <div class="modal-content" style="width:300px;">
+                <div class="modal-header">
+                    <h3>Choose Theme</h3>
+                    <button class="icon-button close-modal"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="theme-grid">
+                    <div class="theme-option" data-theme="light">Light</div>
+                    <div class="theme-option" data-theme="dark">Dark</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW TASK MODAL -->
+        <div id="qa-task-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>New Task</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-task-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-task-form" onsubmit="saveGlobalTask(event)">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="qa-task-title" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="qa-task-desc" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <div class="form-group" style="flex:1">
+                            <label>Due Date</label>
+                            <input type="date" id="qa-task-due" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>Priority</label>
+                            <select id="qa-task-prio" class="form-control">
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <input type="text" id="qa-task-cat" class="form-control" placeholder="Work, Personal...">
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                        <button type="button" class="btn-modal btn-outline"
+                            onclick="closeGlobalModal('qa-task-modal')">Cancel</button>
+                        <button type="submit" class="btn-modal btn-primary">Create Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- NEW STORY MODAL -->
+        <div id="qa-story-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>New Story</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-story-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-story-form" onsubmit="saveGlobalStory(event)">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="qa-story-title" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="qa-story-desc" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <div class="form-group" style="flex:1">
+                            <label>Genre</label>
+                            <div id="qa-genre-list"
+                                style="border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:10px; max-height:120px; overflow-y:auto; background:rgba(0,0,0,0.1);">
+                                <!-- Checkboxes populated via JS -->
+                                <div style="opacity:0.6; font-size:0.8rem;">Loading...</div>
+                            </div>
+                            <div style="display:flex; gap:5px; margin-top:5px;">
+                                <input type="text" id="qa-new-genre-input" placeholder="Add Genre" class="form-control"
+                                    style="font-size:0.8rem; padding:4px 8px;">
+                                <button type="button" class="btn-outline" onclick="addGlobalGenre()"
+                                    style="padding:4px 10px;">+</button>
+                            </div>
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>Stage</label>
+                            <select id="qa-story-stage" class="form-control">
+                                <option value="Idea">Idea</option>
+                                <option value="Draft">Draft</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                        <button type="button" class="btn-modal btn-outline"
+                            onclick="closeGlobalModal('qa-story-modal')">Cancel</button>
+                        <button type="submit" class="btn-modal btn-primary">Create Story</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- NEW SCENE MODAL (Global) -->
+        <div id="qa-scene-global-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>New Scene</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-scene-global-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-scene-global-form" onsubmit="saveGlobalScene(event)">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="qa-global-scene-title" class="form-control" placeholder="Scene Title"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label>Genre / Type</label>
+                        <input type="text" id="qa-global-scene-genre" class="form-control" placeholder="e.g. Action">
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                        <button type="button" class="btn-modal btn-outline"
+                            onclick="closeGlobalModal('qa-scene-global-modal')">Cancel</button>
+                        <button type="submit" class="btn-modal btn-primary">Create Scene</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- NEW ELEMENT MODAL -->
+        <div id="qa-element-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>New Resource (Library)</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-element-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-element-form" onsubmit="saveGlobalElement(event)">
+                    <!-- Type is always Resource -->
+                    <input type="hidden" id="qa-el-type" value="resources">
+
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input id="qa-el-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <input id="qa-el-category" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="qa-el-desc" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Library Groups</label>
+                        <div id="qa-el-groups-container"
+                            style="max-height: 150px; overflow-y: auto; border: 1px solid rgba(0,0,0,0.1); padding: 10px; border-radius: 6px;">
+                            <!-- Checkboxes injected via JS -->
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                        <button type="button" class="btn-modal btn-outline"
+                            onclick="closeGlobalModal('qa-element-modal')">Cancel</button>
+                        <button type="submit" class="btn-modal btn-primary">Create Resource</button>
+                    </div>
+                </form>
+                </form>
+            </div>
+        </div>
+
+        <!-- NEW NOTE MODAL (Global) -->
+        <div id="qa-note-global-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>New Note</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-note-global-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-note-global-form" onsubmit="saveGlobalNote(event)">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="qa-global-note-title" class="form-control" placeholder="Note Title"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label>Folder</label>
+                        <select id="qa-global-note-folder" class="form-control">
+                            <!-- Populated -->
+                        </select>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                        <button type="button" class="btn-modal btn-outline"
+                            onclick="closeGlobalModal('qa-note-global-modal')">Cancel</button>
+                        <button type="submit" class="btn-modal btn-primary">Create Note</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- NEW FOLDER MODAL (Global) -->
+        <div id="qa-folder-global-modal" class="modal-overlay">
+            <div class="modal-content" style="width:400px;">
+                <div class="modal-header">
+                    <h3>New Folder</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-folder-global-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-folder-global-form" onsubmit="saveGlobalFolder(event)">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="qa-global-folder-name" class="form-control" placeholder="Folder Name"
+                            required>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                        <button type="button" class="btn-modal btn-outline"
+                            onclick="closeGlobalModal('qa-folder-global-modal')">Cancel</button>
+                        <button type="submit" class="btn-modal btn-primary">Create Folder</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- NEW STUDY SUBJECT MODAL -->
+        <div id="qa-subject-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Subject</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-subject-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-subject-form" onsubmit="saveGlobalSubject(event)">
+                    <div class="form-group">
+                        <label>Subject Name</label>
+                        <input type="text" id="qa-sub-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Topics (comma separated)</label>
+                        <textarea id="qa-sub-topics" class="form-control" rows="3"
+                            placeholder="e.g. Algebra, Geometry"></textarea>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                        <button type="button" class="btn-modal btn-outline"
+                            onclick="closeGlobalModal('qa-subject-modal')">Cancel</button>
+                        <button type="submit" class="btn-modal btn-primary">Add Subject</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- NEW STUDY SCHEDULE MODAL -->
+        <div id="qa-schedule-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Schedule</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-schedule-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-schedule-form" onsubmit="saveGlobalSchedule(event)">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="qa-sch-title" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <select id="qa-sch-subject" class="form-control" required>
+                            <!-- Populated -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date & Time</label>
+                        <input type="datetime-local" id="qa-sch-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="qa-sch-type" class="form-control">
+                            <option value="Revision">Revision</option>
+                            <option value="Assignment">Assignment</option>
+                            <option value="Exam">Exam</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                        <button type="button" class="btn-modal btn-outline"
+                            onclick="closeGlobalModal('qa-schedule-modal')">Cancel</button>
+                        <button type="submit" class="btn-modal btn-primary">Save Schedule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- NEW STUDY GOAL MODAL -->
+        <div id="qa-goal-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Study Goal</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-goal-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-goal-form" onsubmit="saveGlobalGoal(event)">
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="qa-goal-desc" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <select id="qa-goal-subject" class="form-control" required>
+                            <!-- Populated -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Date</label>
+                        <input type="date" id="qa-goal-target" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="qa-goal-status" class="form-control">
+                            <option value="Pending">Pending</option>
+                            <option value="InProgress">InProgress</option>
+                            <option value="Complete">Complete</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                        <button type="button" class="btn-modal btn-outline"
+                            onclick="closeGlobalModal('qa-goal-modal')">Cancel</button>
+                        <button type="submit" class="btn-modal btn-primary">Add Goal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- NEW EVENT MODAL (Global) -->
+        <div id="qa-event-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Event</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-event-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-event-form" onsubmit="saveGlobalEvent(event)">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="qa-ev-title" class="form-control" required>
+                    </div>
+
+                    <div style="display:flex; gap:10px;">
+                        <div class="form-group" style="flex:1">
+                            <label>Start</label>
+                            <input type="datetime-local" id="qa-ev-start" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>End</label>
+                            <input type="datetime-local" id="qa-ev-end" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <input type="checkbox" id="qa-ev-allday">
+                            <label for="qa-ev-allday" style="margin:0;">All Day</label>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px;">
+                        <div class="form-group" style="flex:1">
+                            <label>Repetition</label>
+                            <select id="qa-ev-repeat" class="form-control">
+                                <option value="None">None</option>
+                                <option value="Daily">Daily</option>
+                                <option value="Weekly">Weekly</option>
+                                <option value="Monthly">Monthly</option>
+                                <option value="Yearly">Yearly</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>Category</label>
+                            <input type="text" id="qa-ev-category" class="form-control" placeholder="Work, Personal">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="qa-ev-desc" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Subtasks</label>
+                        <div style="display:flex; gap:10px; margin-bottom:10px;">
+                            <input type="text" id="qa-ev-subtask-input" class="form-control"
+                                placeholder="New subtask...">
+                            <button type="button" class="btn-outline" onclick="addGlobalSubtask()"
+                                style="white-space:nowrap;">+ Add</button>
+                        </div>
+                        <div id="qa-subtask-list" style="display:flex; flex-direction:column; gap:8px;">
+                            <!-- Injected JS -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="qa-ev-status" class="form-control">
+                            <option value="Draft">Draft</option>
+                            <option value="Scheduled" selected>Scheduled</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                        <button type="button" class="btn-modal btn-outline"
+                            onclick="closeGlobalModal('qa-event-modal')">Cancel</button>
+                        <button type="submit" class="btn-modal btn-primary">Save Event</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- NEW IDEA MODAL (Global) -->
+        <div id="qa-idea-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>New Idea</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-idea-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-idea-form" onsubmit="saveGlobalIdea(event)">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="qa-idea-title" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Stage</label>
+                        <select id="qa-idea-stage" class="form-control">
+                            <option value="Raw">Raw</option>
+                            <option value="Researching">Researching</option>
+                            <option value="Developing">Developing</option>
+                            <option value="Ready">Ready</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="qa-idea-priority" class="form-control">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">Collection</label>
+                        <select id="qa-idea-collection"
+                            style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc; background:transparent; color:inherit;">
+                            <!-- JS populated -->
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">Description</label>
+                        <textarea id="qa-idea-desc" rows="3"
+                            style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc; background:transparent; color:inherit; resize:vertical;"></textarea>
+                    </div>
+
+                    <div style="text-align:right;">
+                        <button type="button" onclick="closeGlobalModal('qa-idea-modal')"
+                            style="padding:8px 15px; border:1px solid #ccc; background:transparent; color:inherit; border-radius:6px; margin-right:5px; cursor:pointer;">Cancel</button>
+                        <button type="submit"
+                            style="padding:8px 15px; border:none; background:#1a73e8; color:white; border-radius:6px; cursor:pointer;">Save
+                            Idea</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <iframe id="content-frame" src="" frameborder="0" title="Module Content"></iframe>
+        </main>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+    <script>
+        // Check enabled modules for Quick Actions
+        // Check enabled modules for Quick Actions
+        function updateQuickActions() {
+            // Check sidebar links (assumes links are keyed by data-module)
+            const storyLink = document.querySelector('a[data-module="story_studio"]');
+            const storyEnabled = storyLink && storyLink.parentElement.style.display !== 'none';
+
+            const taskLink = document.querySelector('a[data-module="task_manager"]');
+            const taskEnabled = taskLink && taskLink.parentElement.style.display !== 'none';
+
+            const groupStory = document.getElementById('qa-group-story');
+            if (groupStory) groupStory.style.display = storyEnabled ? 'block' : 'none';
+
+            const groupTask = document.getElementById('qa-group-task');
+            if (groupTask) groupTask.style.display = taskEnabled ? 'block' : 'none';
+
+            const notesLink = document.querySelector('a[data-module="notes"]');
+            const notesEnabled = notesLink && notesLink.parentElement.style.display !== 'none';
+            const groupNotes = document.getElementById('qa-group-notes');
+            if (groupNotes) groupNotes.style.display = notesEnabled ? 'block' : 'none';
+
+            const studyLink = document.querySelector('a[data-module="study_tracker"]');
+            const studyEnabled = studyLink && studyLink.parentElement.style.display !== 'none';
+            const groupStudy = document.getElementById('qa-group-study');
+            if (groupStudy) groupStudy.style.display = studyEnabled ? 'block' : 'none';
+
+            const ideaLink = document.querySelector('a[data-module="idea_vault"]');
+            const ideaEnabled = ideaLink && ideaLink.parentElement.style.display !== 'none';
+            const groupIdea = document.getElementById('qa-group-idea');
+            if (groupIdea) groupIdea.style.display = ideaEnabled ? 'block' : 'none';
+        }
+
+        // Listeners
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (data.type === 'module-toggled') {
+                // Determine target link by data-module
+                const link = document.querySelector(`a[data-module="${data.module}"]`);
+                if (link && link.parentElement) {
+                    link.parentElement.style.display = data.enabled ? 'block' : 'none';
+                }
+                // Update Quick Actions
+                updateQuickActions();
+            }
+        });
+
+        // Run on load
+        updateQuickActions();
+
+        // Helper to handle QA clicks
+        function openGlobalModal(modalId) {
+            // Close drawer first
+            document.getElementById('quick-drawer').classList.remove('open');
+            document.getElementById('drawer-overlay').classList.remove('open');
+
+            document.getElementById(modalId).classList.add('open');
+
+            // Init logic
+            if (modalId === 'qa-task-modal') {
+                document.getElementById('qa-task-form').reset();
+            } else if (modalId === 'qa-story-modal') {
+                document.getElementById('qa-story-form').reset();
+                renderGlobalGenres();
+            } else if (modalId === 'qa-element-modal') {
+                document.getElementById('qa-element-form').reset();
+            } else if (modalId === 'qa-element-modal') {
+                document.getElementById('qa-element-form').reset();
+                loadGlobalLibraryGroups();
+            } else if (modalId === 'qa-note-global-modal') {
+                document.getElementById('qa-note-global-form').reset();
+                populateGlobalNoteFolders();
+            } else if (modalId === 'qa-folder-global-modal') {
+                document.getElementById('qa-folder-global-form').reset();
+            } else if (modalId === 'qa-scene-global-modal') {
+                document.getElementById('qa-scene-global-form').reset();
+            } else if (modalId === 'qa-subject-modal') {
+                document.getElementById('qa-subject-form').reset();
+            } else if (modalId === 'qa-schedule-modal') {
+                document.getElementById('qa-schedule-form').reset();
+                populateGlobalStudySelect('qa-sch-subject');
+            } else if (modalId === 'qa-goal-modal') {
+                document.getElementById('qa-goal-form').reset();
+                populateGlobalStudySelect('qa-goal-subject');
+            } else if (modalId === 'qa-event-modal') {
+                document.getElementById('qa-event-form').reset();
+                qaGlobalSubtasks = [];
+                renderGlobalSubtasks();
+
+                // Set default times
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.getElementById('qa-ev-start').value = now.toISOString().slice(0, 16);
+
+                const later = new Date(now.getTime() + 60 * 60 * 1000);
+                document.getElementById('qa-ev-end').value = later.toISOString().slice(0, 16);
+            } else if (modalId === 'qa-idea-modal') {
+                document.getElementById('qa-idea-form').reset();
+                populateGlobalIdeaCollections();
+            }
+        }
+
+        // Listeners for QA Buttons
+        const btnNewStory = document.getElementById('qa-new-story');
+        if (btnNewStory) {
+            btnNewStory.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openGlobalModal('qa-story-modal');
+            });
+        }
+
+        const btnNewScene = document.getElementById('qa-new-scene');
+        if (btnNewScene) {
+            btnNewScene.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openGlobalModal('qa-scene-global-modal');
+            });
+        }
+
+        const btnNewIdea = document.getElementById('qa-new-idea');
+        if (btnNewIdea) {
+            btnNewIdea.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openGlobalModal('qa-idea-modal');
+            });
+        }
+
+        const btnNewElement = document.getElementById('qa-new-element');
+        if (btnNewElement) {
+            btnNewElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openGlobalModal('qa-element-modal');
+            });
+        }
+
+        const btnNewTask = document.getElementById('qa-new-task');
+        if (btnNewTask) {
+            btnNewTask.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openGlobalModal('qa-task-modal');
+            });
+        }
+
+        const btnNewNote = document.getElementById('qa-new-note');
+        if (btnNewNote) {
+            btnNewNote.addEventListener('click', (e) => {
+                e.preventDefault(); e.stopPropagation();
+                openGlobalModal('qa-note-global-modal');
+            });
+        }
+
+        const btnNewFolder = document.getElementById('qa-new-folder');
+        if (btnNewFolder) {
+            btnNewFolder.addEventListener('click', (e) => {
+                e.preventDefault(); e.stopPropagation();
+                openGlobalModal('qa-folder-global-modal');
+            });
+        }
+
+        function closeGlobalModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.remove('open');
+
+            // FIX: Restore focus to content frame
+            setTimeout(() => {
+                const frame = document.getElementById('content-frame');
+                if (frame && frame.contentWindow) {
+                    try {
+                        frame.focus();
+                        frame.contentWindow.focus();
+                        // Try to focus specific known interactive elements if possible, else body
+                        const doc = frame.contentWindow.document;
+                        if (doc) {
+                            if (doc.activeElement && doc.activeElement !== doc.body) {
+                                doc.activeElement.focus();
+                            } else {
+                                doc.body.focus();
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Could not restore focus to iframe:", e);
+                    }
+                }
+            }, 100);
+        }
+
+        // Listeners for Study QA
+        const btnNewSubject = document.getElementById('qa-new-subject');
+        if (btnNewSubject) btnNewSubject.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openGlobalModal('qa-subject-modal'); });
+
+        const btnNewSchedule = document.getElementById('qa-new-schedule');
+        if (btnNewSchedule) btnNewSchedule.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openGlobalModal('qa-schedule-modal'); });
+
+        const btnNewGoal = document.getElementById('qa-new-goal');
+        if (btnNewGoal) btnNewGoal.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openGlobalModal('qa-goal-modal'); });
+
+        const btnNewEvent = document.getElementById('qa-new-event');
+        if (btnNewEvent) btnNewEvent.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openGlobalModal('qa-event-modal'); });
+
+        async function populateGlobalStudySelect(selectId) {
+            const el = document.getElementById(selectId);
+            el.innerHTML = '<option value="">Loading...</option>';
+            try {
+                const res = await fetch('/api/storage/study_data.json');
+                if (res.ok) {
+                    const data = await res.json();
+                    el.innerHTML = '<option value="">Select Subject...</option>';
+                    (data.subjects || []).forEach(sub => {
+                        const opt = document.createElement('option');
+                        opt.value = sub.id;
+                        opt.textContent = sub.name;
+                        el.appendChild(opt);
+                    });
+                }
+            } catch (e) { console.error(e); el.innerHTML = '<option value="">Error</option>'; }
+        }
+
+        async function saveGlobalSubject(e) {
+            e.preventDefault();
+            const name = document.getElementById('qa-sub-name').value;
+            const topicStr = document.getElementById('qa-sub-topics').value;
+
+            const topics = topicStr.split(',').map(t => t.trim()).filter(t => t).map(t => ({
+                id: Date.now() + Math.random(),
+                name: t,
+                subtopics: []
+            }));
+
+            const newSubject = { id: crypto.randomUUID(), name, topics };
+
+            await appendToStudyData({ subjects: [newSubject] });
+            closeGlobalModal('qa-subject-modal');
+        }
+
+        // Global Subtasks State
+        let qaGlobalSubtasks = [];
+
+        function addGlobalSubtask() {
+            const input = document.getElementById('qa-ev-subtask-input');
+            const tit = input.value.trim();
+            if (tit) {
+                qaGlobalSubtasks.push({ id: crypto.randomUUID(), title: tit, completed: false });
+                input.value = '';
+                renderGlobalSubtasks();
+            }
+        }
+
+        function renderGlobalSubtasks() {
+            const list = document.getElementById('qa-subtask-list');
+            list.innerHTML = '';
+            qaGlobalSubtasks.forEach(t => {
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.alignItems = 'center';
+                row.style.gap = '10px';
+                row.style.background = 'rgba(0,0,0,0.05)';
+                row.style.padding = '5px 10px';
+                row.style.borderRadius = '4px';
+
+                row.innerHTML = `
+                    <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleGlobalSubtask('${t.id}')">
+                    <span style="flex:1; text-decoration:${t.completed ? 'line-through' : 'none'}; opacity:${t.completed ? 0.6 : 1}">${t.title}</span>
+                    <i class="fas fa-trash" style="cursor:pointer; opacity:0.6; font-size:0.8rem;" onclick="removeGlobalSubtask('${t.id}')"></i>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        function toggleGlobalSubtask(id) {
+            const t = qaGlobalSubtasks.find(x => x.id === id);
+            if (t) { t.completed = !t.completed; renderGlobalSubtasks(); }
+        }
+
+        function removeGlobalSubtask(id) {
+            qaGlobalSubtasks = qaGlobalSubtasks.filter(x => x.id !== id);
+            renderGlobalSubtasks();
+        }
+
+        async function saveGlobalEvent(e) {
+            e.preventDefault();
+            const newEvent = {
+                id: crypto.randomUUID(),
+                title: document.getElementById('qa-ev-title').value,
+                start: document.getElementById('qa-ev-start').value,
+                end: document.getElementById('qa-ev-end').value,
+                allDay: document.getElementById('qa-ev-allday').checked,
+                repeat: document.getElementById('qa-ev-repeat').value,
+                category: document.getElementById('qa-ev-category').value,
+                description: document.getElementById('qa-ev-desc').value,
+                status: document.getElementById('qa-ev-status').value,
+                subtasks: qaGlobalSubtasks,
+                location: '',
+                participants: '',
+                attachments: ''
+            };
+
+            try {
+                // Get existing
+                let events = [];
+                const res = await fetch('/api/storage/event_manager.json');
+                if (res.ok) {
+                    events = await res.json();
+                    if (!Array.isArray(events)) events = [];
+                }
+
+                events.push(newEvent);
+
+                await fetch('/api/storage/event_manager.json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: events })
+                });
+
+                closeGlobalModal('qa-event-modal');
+
+                // Refresh dashboard widget if on dashboard
+                const frame = document.getElementById('content-frame');
+                if (frame && frame.contentWindow && frame.contentWindow.updateEventWidget) {
+                    frame.contentWindow.updateEventWidget();
+                }
+
+            } catch (e) { console.error(e); }
+
+            checkRefresh('study_tracker');
+        }
+
+        async function saveGlobalSchedule(e) {
+            e.preventDefault();
+            const newSch = {
+                id: crypto.randomUUID(),
+                title: document.getElementById('qa-sch-title').value,
+                subjectId: document.getElementById('qa-sch-subject').value,
+                date: document.getElementById('qa-sch-date').value,
+                type: document.getElementById('qa-sch-type').value
+            };
+            await appendToStudyData({ schedules: [newSch] });
+            closeGlobalModal('qa-schedule-modal');
+            checkRefresh('study_tracker');
+        }
+
+        async function saveGlobalGoal(e) {
+            e.preventDefault();
+            const newGoal = {
+                id: crypto.randomUUID(),
+                description: document.getElementById('qa-goal-desc').value,
+                subjectId: document.getElementById('qa-goal-subject').value,
+                targetDate: document.getElementById('qa-goal-target').value,
+                status: document.getElementById('qa-goal-status').value
+            };
+            await appendToStudyData({ goals: [newGoal] });
+            closeGlobalModal('qa-goal-modal');
+            checkRefresh('study_tracker');
+        }
+
+        async function appendToStudyData(partialData) {
+            try {
+                const url = '/api/storage/study_data.json';
+                const res = await fetch(url);
+                let current = { subjects: [], schedules: [], goals: [], sessions: [] };
+                if (res.ok) {
+                    current = await res.json();
+                    if (!current.subjects) current.subjects = [];
+                    if (!current.schedules) current.schedules = [];
+                    if (!current.goals) current.goals = [];
+                }
+
+                if (partialData.subjects) current.subjects.push(...partialData.subjects);
+                if (partialData.schedules) current.schedules.push(...partialData.schedules);
+                if (partialData.goals) current.goals.push(...partialData.goals);
+
+                await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: current })
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        // --- GLOBAL LOGIC ---
+
+        // 1. Task Logic
+        async function saveGlobalTask(e) {
+            e.preventDefault();
+            const title = document.getElementById('qa-task-title').value;
+            const desc = document.getElementById('qa-task-desc').value;
+            const due = document.getElementById('qa-task-due').value;
+            const prio = document.getElementById('qa-task-prio').value;
+            const cat = document.getElementById('qa-task-cat').value;
+
+            // Load existing to append
+            let tasks = [];
+            try {
+                const res = await fetch('/api/storage/tasks.json');
+                if (res.ok) tasks = await res.json();
+            } catch (e) { console.error(e); }
+
+            const newTask = {
+                id: crypto.randomUUID(),
+                title,
+                description: desc,
+                startDate: new Date().toISOString().split('T')[0],
+                dueDate: due,
+                priority: prio,
+                category: cat,
+                status: 'ToDo',
+                subtasks: []
+            };
+
+            tasks.push(newTask);
+
+            // Save
+            await fetch('/api/storage/tasks.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: tasks })
+            });
+
+            closeGlobalModal('qa-task-modal');
+            checkRefresh('task_manager');
+        }
+
+        // 2. Story Logic
+        async function saveGlobalStory(e) {
+            e.preventDefault();
+            const title = document.getElementById('qa-story-title').value;
+            const desc = document.getElementById('qa-story-desc').value;
+            // Get Checkboxes
+            const genreCheckboxes = document.querySelectorAll('.qa-genre-chk:checked');
+            const genres = Array.from(genreCheckboxes).map(cb => cb.value);
+            const stage = document.getElementById('qa-story-stage').value;
+
+            let stories = [];
+            try {
+                const res = await fetch('/api/storage/stories.json');
+                if (res.ok) stories = await res.json();
+            } catch (e) { }
+
+            const newStory = {
+                id: crypto.randomUUID(),
+                title,
+                description: desc,
+                genre: genres,
+                stage,
+                updated_at: new Date().toISOString(),
+                chapters: [],
+                elements: { resources: [], links: [], notes: [] }
+            };
+
+            stories.push(newStory);
+
+            await fetch('/api/storage/stories.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: stories })
+            });
+
+            closeGlobalModal('qa-story-modal');
+            checkRefresh('story_studio');
+        }
+
+        // 2b. Scene Logic
+        async function saveGlobalScene(e) {
+            e.preventDefault();
+            const title = document.getElementById('qa-global-scene-title').value;
+            const genre = document.getElementById('qa-global-scene-genre').value;
+
+            let scenes = [];
+            try {
+                const res = await fetch('/api/storage/scenes.json');
+                if (res.ok) scenes = await res.json();
+            } catch (e) { }
+            if (!Array.isArray(scenes)) scenes = [];
+
+            const newScene = {
+                id: 'scn_' + Date.now(),
+                title: title,
+                genre: genre,
+                content: '<p>Start writing scene...</p>',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            scenes.push(newScene);
+
+            await fetch('/api/storage/scenes.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: scenes })
+            });
+
+            closeGlobalModal('qa-scene-global-modal');
+            checkRefresh('story_studio');
+        }
+
+        // --- Genre Logic (Global) ---
+        async function renderGlobalGenres() {
+            // Ensure library loaded
+            if (!globalLibrary.genres) {
+                try {
+                    const res = await fetch('/api/storage/library.json');
+                    if (res.ok) globalLibrary = await res.json();
+                } catch (e) { }
+            }
+            if (!globalLibrary.genres) globalLibrary.genres = [];
+
+            const list = document.getElementById('qa-genre-list');
+            list.innerHTML = '';
+
+            globalLibrary.genres.forEach(g => {
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.justifyContent = 'space-between';
+                row.style.alignItems = 'center';
+                row.style.marginBottom = '5px';
+
+                row.innerHTML = `
+                        <label style="display:flex; align-items:center; width:100%; cursor:pointer; margin:0; overflow:hidden;">
+                            <input type="checkbox" class="qa-genre-chk" value="${g}" style="margin-right:8px;">
+                            <span style="font-size:0.9rem; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${g}</span>
+                        </label>
+                        <i class="fas fa-trash" style="cursor:pointer; opacity:0.5; font-size:0.8rem; color:var(--danger-color); margin-left:5px;" onclick="deleteGlobalGenre('${g}')"></i>
+                    `;
+                list.appendChild(row);
+            });
+        }
+
+        async function addGlobalGenre() {
+            const input = document.getElementById('qa-new-genre-input');
+            const val = input.value.trim();
+            if (!val) return;
+
+            if (!globalLibrary.genres) globalLibrary.genres = [];
+            if (globalLibrary.genres.includes(val)) {
+                alert('Genre already exists');
+                return;
+            }
+
+            globalLibrary.genres.push(val);
+            // Save Library
+            await fetch('/api/storage/library.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: globalLibrary })
+            });
+
+            input.value = '';
+            renderGlobalGenres();
+        }
+
+        async function deleteGlobalGenre(gName) {
+            if (!confirm('Delete genre "' + gName + '"?')) return;
+
+            if (!globalLibrary.genres) return;
+            globalLibrary.genres = globalLibrary.genres.filter(g => g !== gName);
+
+            await fetch('/api/storage/library.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: globalLibrary })
+            });
+            renderGlobalGenres();
+        }
+
+        // 3. Element Logic
+        let globalLibrary = { groups: [], elements: [] };
+        async function loadGlobalLibraryGroups() {
+            try {
+                const res = await fetch('/api/storage/library.json');
+                if (res.ok) globalLibrary = await res.json();
+            } catch (e) { }
+
+            const container = document.getElementById('qa-el-groups-container');
+            container.innerHTML = '';
+
+            // Ensure 'global' group exists
+            if (!globalLibrary.groups.find(g => g.id === 'global')) {
+                globalLibrary.groups.unshift({ id: 'global', name: 'Global', is_default: true });
+            }
+
+            globalLibrary.groups.forEach(g => {
+                const div = document.createElement('div');
+                div.style.marginBottom = '5px';
+                div.innerHTML = `
+                    <label style="display:flex; align-items:center; font-weight:normal; margin:0;">
+                        <input type="checkbox" name="qa-el-group" value="${g.id}" ${g.id === 'global' ? 'checked' : ''} style="margin-right:8px;">
+                        ${g.name}
+                    </label>
+                 `;
+                container.appendChild(div);
+            });
+        }
+
+        async function saveGlobalElement(e) {
+            e.preventDefault();
+
+            // Get checked groups
+            const checkboxes = document.querySelectorAll('input[name="qa-el-group"]:checked');
+            const selectedGroups = Array.from(checkboxes).map(cb => cb.value);
+
+            // Content (Resource Only)
+            const content = {
+                name: document.getElementById('qa-el-name').value,
+                category: document.getElementById('qa-el-category').value,
+                description: document.getElementById('qa-el-desc').value
+            };
+
+            globalLibrary.elements.push({
+                id: crypto.randomUUID(),
+                type: 'resource',
+                content,
+                groups: selectedGroups
+            });
+
+            await fetch('/api/storage/library.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: globalLibrary })
+            });
+
+            closeGlobalModal('qa-element-modal');
+            checkRefresh('story_studio');
+        }
+
+        // 4. Refresh Logic
+        function checkRefresh(moduleId) {
+            const frame = document.getElementById('content-frame');
+            // Check if current iframe src matches
+            const activeLink = document.querySelector('.nav-link.active');
+            if (activeLink && activeLink.getAttribute('data-module') === moduleId) {
+                if (moduleId === 'study_tracker') {
+                    // Use message for smoother update
+                    frame.contentWindow.postMessage({ type: 'refresh-data' }, '*');
+                } else {
+                    // Fallback to reload
+                    frame.contentWindow.location.reload();
+                }
+            }
+        }
+
+        // Navigation Drag and Drop (from previous state)
+        const navList = document.getElementById('nav-links-list'); // Wait, ID might be different in base?
+        // Ah, looking at the previous file content, there was no 'nav-links-list' ID in the HTML structure above!
+        // The lists are id="nav-general" and id="nav-apps".
+        // The previous script (Step 173) referenced 'nav-links-list'. This might have been a bug or I missed where it was defined.
+        // Let me check the HTML again.
+        // Lines 64 and 80 define the lists.
+        // I need to attach listeners to BOTH lists if I want drag and drop to work there.
+        // Or if the user previously added an ID, I wiped it?
+        // Step 223 lines 64: <ul class="nav-links" id="nav-general">
+        // Step 223 lines 80: <ul class="nav-links" id="nav-apps">
+        // The script in Step 173 referenced `const navList = document.getElementById('nav-links-list');`.
+        // This suggests the Drag and Drop feature might NOT have been working or I missed an ID addition.
+        // However, looking at Step 107 summary, I "Made navigation list items draggable...".
+        // Let's assume I should apply it to 'nav-apps' which is where the draggable items usually are.
+        // Or better, apply to all lists.
+
+        function enableDragAndDrop(listId) {
+            const navList = document.getElementById(listId);
+            if (!navList) return;
+
+            let draggedItem = null;
+
+            navList.addEventListener('dragstart', (e) => {
+                if (e.target.classList.contains('nav-item')) {
+                    draggedItem = e.target;
+                    e.target.style.opacity = '0.5';
+                    e.dataTransfer.effectAllowed = 'move';
+                }
+            });
+
+            navList.addEventListener('dragend', (e) => {
+                if (e.target.classList.contains('nav-item')) {
+                    e.target.style.opacity = '1';
+                    draggedItem = null;
+                }
+            });
+
+            navList.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(navList, e.clientY);
+                if (draggedItem) {
+                    if (afterElement == null) {
+                        navList.appendChild(draggedItem);
+                    } else {
+                        navList.insertBefore(draggedItem, afterElement);
+                    }
+                }
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.nav-item:not([style*="opacity: 0.5"])')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        enableDragAndDrop('nav-general');
+        enableDragAndDrop('nav-apps');
+
+    </script>
+</body>
+
+</html>

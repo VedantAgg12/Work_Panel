@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <h3>Actions</h3>
+            <!-- Add Subject Removed -->
+            <button class="btn-sidebar btn-action" onclick="openModal('modal-schedule')">
+                <i class="fas fa-calendar-plus"></i> Add Schedule
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>Navigation</h3>
+            <button class="btn-sidebar active" onclick="showScreen('screen-tracker', this)">
+                <i class="fas fa-chart-line"></i> Tracker
+            </button>
+            <button class="btn-sidebar" onclick="showScreen('screen-syllabus', this)">
+                <i class="fas fa-list-alt"></i> Syllabus
+            </button>
+            <button class="btn-sidebar" onclick="showScreen('screen-calendar', this)">
+                <i class="fas fa-calendar-alt"></i> Calendar
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Tracker Screen -->
+        <div id="screen-tracker" class="screen active">
+            <div class="page-header">
+                <h2>Tracker</h2>
+            </div>
+            <div class="tracker-container">
+                <div class="tracker-left">
+                    <!-- Session Manager -->
+                    <div class="session-card">
+                        <div id="active-session-info" style="font-size: 0.9rem; margin-bottom: 10px; opacity: 0.7;">
+                            Ready to start</div>
+
+                        <div class="form-group" style="text-align: left;">
+                            <select id="session-subject-select" class="form-control">
+                                <!-- Populated -->
+                            </select>
+                        </div>
+
+                        <div class="timer-display" id="timer">00:00:00</div>
+
+                        <div class="session-controls">
+                            <button class="btn-control btn-play" id="btn-start" onclick="startTimer()"><i
+                                    class="fas fa-play"></i></button>
+                            <button class="btn-control btn-pause" id="btn-pause" onclick="pauseTimer()"
+                                style="display:none;"><i class="fas fa-pause"></i></button>
+                            <button class="btn-control btn-stop" id="btn-stop" onclick="stopTimer()" disabled><i
+                                    class="fas fa-stop"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- In-Session Syllabus Checklist (Appears when started) -->
+                    <div id="session-checklist" class="checklist-container">
+                        <h4>Mark Topics as Completed</h4>
+                        <div id="checklist-items">
+                            <!-- Populated via JS based on subject -->
+                        </div>
+                    </div>
+
+                    <!-- Session Analytics -->
+                    <div id="session-analytics" class="session-card" style="margin-top: 20px; text-align: left;">
+                        <h4
+                            style="margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+                            Session Analytics
+                            <button onclick="clearAnalytics()"
+                                style="font-size:0.7rem; padding:4px 8px; border:1px solid var(--danger); background:transparent; color:var(--danger); border-radius:4px; cursor:pointer;">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                        </h4>
+                        <div
+                            style="display: flex; justify-content: space-around; text-align: center; margin-bottom: 15px;">
+                            <div>
+                                <div id="analytics-total-sessions" style="font-size: 1.5rem; font-weight: 700;">0</div>
+                                <div style="font-size: 0.8rem; opacity: 0.7;">Total Sessions</div>
+                            </div>
+                            <div>
+                                <div id="analytics-total-hours" style="font-size: 1.5rem; font-weight: 700;">0h 0m</div>
+                                <div style="font-size: 0.8rem; opacity: 0.7;">Total Time</div>
+                            </div>
+                        </div>
+
+                        <div style="max-height: 200px; overflow-y: auto;">
+                            <table style="width:100%; font-size:0.8rem; border-collapse: collapse; text-align: left;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border-color); opacity: 0.7;">
+                                        <th style="padding: 5px;">Date</th>
+                                        <th style="padding: 5px;">Subject</th>
+                                        <th style="padding: 5px;">Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analytics-history-body">
+                                    <!-- Populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Goals Section -->
+                <div class="tracker-right">
+                    <div class="page-header" style="border:none; margin:0; padding:0 0 10px 0;">
+                        <h3 style="margin:0;">Active Goals</h3>
+                        <button class="btn-action" onclick="openModal('modal-goal')"
+                            style="padding: 5px 10px; border-radius: 6px;">
+                            <i class="fas fa-plus"></i> New Goal
+                        </button>
+                    </div>
+                    <div id="goals-list" class="goals-grid">
+                        <!-- Populated -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Syllabus Screen -->
+        <div id="screen-syllabus" class="screen">
+            <div class="page-header">
+                <h2>Syllabus</h2>
+                <button class="btn-action" onclick="openModal('modal-subject')"
+                    style="padding: 8px 15px; border-radius: 6px;">
+                    <i class="fas fa-plus"></i> Add Subject
+                </button>
+            </div>
+            <div id="syllabus-accordion">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+
+        <!-- Calendar Screen -->
+        <div id="screen-calendar" class="screen">
+            <div class="page-header">
+                <h2>Calendar</h2>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <button class="btn-action" onclick="changeMonth(-1)"
+                        style="padding: 5px 10px; border-radius: 6px;"><i class="fas fa-chevron-left"></i></button>
+                    <div style="font-size: 1.1rem; opacity: 0.8; min-width: 150px; text-align: center;"
+                        id="cal-month-name"></div>
+                    <button class="btn-action" onclick="changeMonth(1)"
+                        style="padding: 5px 10px; border-radius: 6px;"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+                <!-- Headers -->
+                <div class="calendar-header-cell">Sun</div>
+                <div class="calendar-header-cell">Mon</div>
+                <div class="calendar-header-cell">Tue</div>
+                <div class="calendar-header-cell">Wed</div>
+                <div class="calendar-header-cell">Thu</div>
+                <div class="calendar-header-cell">Fri</div>
+                <div class="calendar-header-cell">Sat</div>
+                <!-- Days populated via JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODALS -->
+
+    <!-- Subject Modal -->
+    <div id="modal-subject" class="modal-overlay">
+        <div class="modal-card">
+            <h3>Add Subject</h3>
+            <form id="form-subject">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <!-- Topics field removed, we now add topics via the accordion -->
+                <div style="margin-top: 20px; text-align: right;">
+                    <button type="button" class="btn-action" onclick="closeModal('modal-subject')"
+                        style="margin-right: 10px;">Cancel</button>
+                    <button type="submit" class="btn-submit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Topic Modal -->
+    <div id="modal-topic" class="modal-overlay">
+        <div class="modal-card">
+            <h3>Add/Edit Topic</h3>
+            <form id="form-topic">
+                <input type="hidden" name="subjectId" id="topic-subject-id">
+                <input type="hidden" name="topicId" id="topic-id"> <!-- Optional for edit -->
+                <div class="form-group">
+                    <label>Topic Name</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button type="button" class="btn-action" onclick="closeModal('modal-topic')"
+                        style="margin-right: 10px;">Cancel</button>
+                    <button type="submit" class="btn-submit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Subtopic Modal -->
+    <div id="modal-subtopic" class="modal-overlay">
+        <div class="modal-card">
+            <h3>Add/Edit Subtopic</h3>
+            <form id="form-subtopic">
+                <input type="hidden" name="subjectId" id="subtopic-subject-id">
+                <input type="hidden" name="topicId" id="subtopic-topic-id">
+                <input type="hidden" name="subtopicId" id="subtopic-id">
+                <div class="form-group">
+                    <label>Subtopic Name</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button type="button" class="btn-action" onclick="closeModal('modal-subtopic')"
+                        style="margin-right: 10px;">Cancel</button>
+                    <button type="submit" class="btn-submit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Schedule Modal -->
+    <div id="modal-schedule" class="modal-overlay">
+        <div class="modal-card">
+            <h3>Add Schedule</h3>
+            <form id="form-schedule">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" name="title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <select name="subject" class="form-control" id="schedule-subject-select" required>
+                        <!-- Populated -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date & Time</label>
+                    <input type="datetime-local" name="date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select name="type" class="form-control">
+                        <option value="Revision">Revision</option>
+                        <option value="Assignment">Assignment</option>
+                        <option value="Exam">Exam</option>
+                    </select>
+                </div>
+                <div style="text-align: right;">
+                    <button type="button" style="margin-right: 10px; background: transparent; border: 1px solid #ccc;"
+                        class="btn-submit" onclick="closeModal('modal-schedule')">Cancel</button>
+                    <button type="submit" class="btn-submit">Save Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Goal Modal -->
+    <div id="modal-goal" class="modal-overlay">
+        <div class="modal-card">
+            <h3>Add Study Goal</h3>
+            <form id="form-goal">
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" name="description" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <select name="subject" class="form-control" id="goal-subject-select" required>
+                        <!-- Populated -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Target Date</label>
+                    <input type="date" name="targetDate" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status" class="form-control">
+                        <option value="Pending">Pending</option>
+                        <option value="InProgress">InProgress</option>
+                        <option value="Complete">Complete</option>
+                    </select>
+                </div>
+                <div style="text-align: right;">
+                    <button type="button" style="margin-right: 10px; background: transparent; border: 1px solid #ccc;"
+                        class="btn-submit" onclick="closeModal('modal-goal')">Cancel</button>
+                    <button type="submit" class="btn-submit">Add Goal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

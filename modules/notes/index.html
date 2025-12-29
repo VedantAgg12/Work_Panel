@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+            --accent-color: #1a73e8;
+            --danger-color: #d93025;
+            --hover-color: rgba(0, 0, 0, 0.05);
+
+            /* Editor specific */
+            --editor-bg: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #2d2d2d;
+            --bg-secondary: #1e1e1e;
+            --text-color: #e0e0e0;
+            --border-color: #404040;
+            --accent-color: #8ab4f8;
+            --danger-color: #f28b82;
+            --hover-color: rgba(255, 255, 255, 0.05);
+            --editor-bg: #2d2d2d;
+        }
+
+        * {
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            display: flex;
+            height: 100%;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .actions-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--hover-color);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .folders-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .folder-item {
+            margin-bottom: 10px;
+        }
+
+        .folder-header {
+            padding: 8px 10px;
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        .folder-header:hover {
+            background-color: var(--hover-color);
+            opacity: 1;
+        }
+
+        .folder-header i.fa-folder {
+            margin-right: 8px;
+            font-size: 0.8rem;
+        }
+
+        .folder-action {
+            opacity: 0;
+            transition: opacity 0.2s;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .folder-header:hover .folder-action {
+            opacity: 0.6;
+        }
+
+        .folder-action:hover {
+            opacity: 1;
+            background-color: rgba(0,0,0,0.1);
+        }
+
+        .notes-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            margin-left: 10px;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .note-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            border-radius: 0 6px 6px 0;
+            color: var(--text-color);
+            opacity: 0.8;
+            transition: all 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .note-item:hover {
+            background-color: var(--hover-color);
+            opacity: 1;
+        }
+
+        .note-item.active {
+            background-color: var(--accent-color);
+            color: #fff;
+            opacity: 1;
+        }
+
+        /* MAIN EDITOR */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-color);
+            height: 100vh;
+        }
+
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 30px 40px;
+            /* max-width: 900px; Removed for full width */
+            /* margin: 0 auto; Removed for full width */
+            width: 100%;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-color);
+            opacity: 0.5;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        /* Editor Header */
+        .editor-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .title-input {
+            flex: 1;
+            font-size: 2rem;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            color: var(--text-color);
+            padding: 5px;
+            border-bottom: 1px solid transparent;
+        }
+
+        .title-input:focus {
+            border-bottom-color: var(--accent-color);
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            opacity: 0.6;
+        }
+
+        .icon-btn:hover {
+            opacity: 1;
+            background: var(--hover-color);
+        }
+
+        .icon-btn.danger:hover {
+            color: var(--danger-color);
+            background: rgba(217, 48, 37, 0.1);
+        }
+
+        .icon-btn.favorite.active {
+            color: #fbbc04;
+            /* Google Yellow */
+            opacity: 1;
+        }
+
+        /* Meta Row */
+        .meta-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .folder-select {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            gap: 5px;
+            padding: 10px 0;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            background: var(--bg-color);
+            z-index: 10;
+        }
+
+        .tool-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .tool-btn:hover {
+            background: var(--hover-color);
+            opacity: 1;
+        }
+
+        .tool-btn.active {
+            background: var(--hover-color);
+            color: var(--accent-color);
+            opacity: 1;
+        }
+
+        /* Editor Body */
+        .editor-body {
+            flex: 1;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text-color);
+            overflow-y: auto;
+            padding-bottom: 50px;
+            white-space: pre-wrap;
+            /* Preserve whitespace */
+            background-color: var(--editor-bg);
+        }
+
+        .editor-body:empty:before {
+            content: 'Start typing...';
+            color: grey;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 8px;
+            width: 350px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            margin: 0 0 20px 0;
+            font-size: 1.2rem;
+            color: var(--text-color);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            border-radius: 4px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="actions-group">
+                    <button class="action-btn" onclick="openModal('folder-modal')">
+                        <i class="fas fa-folder-plus"></i> New Folder
+                    </button>
+                    <button class="action-btn" onclick="openModal('note-modal')">
+                        <i class="fas fa-plus"></i> New Note
+                    </button>
+                </div>
+            </div>
+            <div class="folders-container" id="folders-list">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div id="empty-state" class="empty-state">
+                <i class="far fa-sticky-note"></i>
+                <p>Select a note to view or create a new one.</p>
+            </div>
+
+            <div id="editor-view" class="editor-container" style="display: none;">
+                <!-- Header -->
+                <div class="editor-header">
+                    <input type="text" id="note-title" class="title-input" placeholder="Untitled Note">
+                    <button class="icon-btn favorite" id="btn-fav" title="Favorite"><i class="fas fa-star"></i></button>
+                    <button class="icon-btn danger" id="btn-delete" title="Delete"><i
+                            class="fas fa-trash-alt"></i></button>
+                </div>
+
+                <!-- Meta -->
+                <div class="meta-row">
+                    <select id="folder-select" class="folder-select">
+                        <!-- Options injected -->
+                    </select>
+                </div>
+
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <button class="tool-btn" onclick="formatDoc('bold')" title="Bold"><i
+                            class="fas fa-bold"></i></button>
+                    <button class="tool-btn" onclick="formatDoc('italic')" title="Italic"><i
+                            class="fas fa-italic"></i></button>
+                    <button class="tool-btn" onclick="formatDoc('underline')" title="Underline"><i
+                            class="fas fa-underline"></i></button>
+                    <button class="tool-btn" onclick="formatDoc('strikeThrough')" title="Strike"><i
+                            class="fas fa-strikethrough"></i></button>
+                    <div style="width: 1px; background: var(--border-color); margin: 0 5px;"></div>
+                    <button class="tool-btn" onclick="formatDoc('insertUnorderedList')" title="Bullet List"><i
+                            class="fas fa-list-ul"></i></button>
+                    <button class="tool-btn" onclick="formatDoc('insertOrderedList')" title="Numbered List"><i
+                            class="fas fa-list-ol"></i></button>
+                </div>
+
+                <!-- Content -->
+                <div id="note-content" class="editor-body" contenteditable="true"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="folder-modal" class="modal">
+        <div class="modal-box">
+            <h3 class="modal-title">New Folder</h3>
+            <input type="text" id="new-folder-name" class="form-input" placeholder="Folder Name">
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal('folder-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createFolder()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="note-modal" class="modal">
+        <div class="modal-box">
+            <h3 class="modal-title">New Note</h3>
+            <input type="text" id="new-note-title" class="form-input" placeholder="Note Title">
+            <label style="display:block; margin-bottom:5px; font-size:0.9rem;">Select Folder:</label>
+            <select id="new-note-folder" class="form-input">
+                <!-- populated -->
+            </select>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal('note-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createNote()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="folder-rename-modal" class="modal">
+        <div class="modal-box">
+            <h3 class="modal-title">Rename Folder</h3>
+            <input type="hidden" id="rename-folder-id">
+            <input type="text" id="rename-folder-name" class="form-input" placeholder="New Folder Name">
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal('folder-rename-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveRenameFolder()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // -- STATE --
+        let db = { folders: [] };
+        let activeNoteId = null;
+        let activeFolderId = null; // For UI expansion state
+        let saveTimeout = null;
+
+        // -- INITIALIZATION --
+        async function init() {
+            await loadData();
+
+            // Listen for messages from parent
+            window.addEventListener('message', (event) => {
+                const data = event.data;
+                if (data.type === 'theme-change') {
+                    document.documentElement.setAttribute('data-theme', data.theme);
+                } else if (data.type === 'sync-state') {
+                    if (data.state && data.state.theme) {
+                        document.documentElement.setAttribute('data-theme', data.state.theme);
+                    }
+                }
+            });
+
+            // Request initial state
+            window.parent.postMessage({ type: 'request-state' }, '*');
+        }
+
+        async function loadData() {
+            try {
+                const res = await fetch('/api/storage/notes.json');
+                if (res.ok) {
+                    const data = await res.json();
+                    // Handle creating file if empty array returned (initial state)
+                    if (Array.isArray(data) && data.length === 0) {
+                        db = { folders: [{ id: 'f_default', name: 'General', notes: [] }] };
+                        saveData(); // Save default structure
+                    } else if (data.folders) {
+                        db = data;
+                    } else {
+                        // Fallback
+                        db = { folders: [{ id: 'f_default', name: 'General', notes: [] }] };
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load notes', e);
+            }
+            renderSidebar();
+        }
+
+        async function saveData() {
+            await fetch('/api/storage/notes.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: db })
+            });
+        }
+
+        // -- RENDERING --
+        function renderSidebar() {
+            const container = document.getElementById('folders-list');
+            container.innerHTML = '';
+
+            db.folders.forEach(folder => {
+                const folderEl = document.createElement('div');
+                folderEl.className = 'folder-item';
+
+                // Calculate note count
+                const count = folder.notes ? folder.notes.length : 0;
+
+                folderEl.innerHTML = `
+                    <div class="folder-header" onclick="toggleFolder('${folder.id}')">
+                        <span style="display:flex; align-items:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                            <i class="fas fa-folder fa-folder"></i> ${folder.name}
+                        </span>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <span style="font-size:0.8rem; opacity:0.6; margin-right:5px;">${count}</span>
+                            <i class="fas fa-edit folder-action" title="Rename" onclick="openRenameFolder(event, '${folder.id}', '${folder.name}')"></i>
+                            <i class="fas fa-trash-alt folder-action" title="Delete" onclick="deleteFolder(event, '${folder.id}')"></i>
+                        </div>
+                    </div>
+                    <ul class="notes-list" id="list-${folder.id}" style="display: ${activeFolderId === folder.id ? 'block' : 'none'}">
+                    </ul>
+                `;
+
+                container.appendChild(folderEl);
+
+                // Notes
+                const list = folderEl.querySelector(`#list-${folder.id}`);
+                if (folder.notes) {
+                    folder.notes.forEach(note => {
+                        const noteEl = document.createElement('li');
+                        noteEl.className = `note-item ${activeNoteId === note.id ? 'active' : ''}`;
+                        noteEl.innerText = note.title || 'Untitled';
+                        noteEl.onclick = (e) => {
+                            e.stopPropagation();
+                            loadNote(note.id, folder.id);
+                        };
+                        list.appendChild(noteEl);
+                    });
+                }
+            });
+
+            updateSelects();
+        }
+
+        function updateSelects() {
+            const selects = [document.getElementById('folder-select'), document.getElementById('new-note-folder')];
+            selects.forEach(sel => {
+                if (!sel) return;
+                const currentVal = sel.value;
+                sel.innerHTML = '';
+                db.folders.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.id;
+                    opt.innerText = f.name;
+                    sel.appendChild(opt);
+                });
+                if (currentVal) sel.value = currentVal;
+            });
+        }
+
+        function toggleFolder(fid) {
+            activeFolderId = activeFolderId === fid ? null : fid;
+            renderSidebar();
+        }
+
+        // -- EDITOR LOGIC --
+        function loadNote(noteId, folderId) {
+            activeNoteId = noteId;
+            const folder = db.folders.find(f => f.id === folderId);
+            const note = folder.notes.find(n => n.id === noteId);
+
+            if (!note) return;
+
+            // UI Switch
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('editor-view').style.display = 'flex';
+
+            // Populate
+            document.getElementById('note-title').value = note.title;
+            document.getElementById('note-content').innerHTML = note.content || '';
+            document.getElementById('folder-select').value = folderId;
+
+            const btnFav = document.getElementById('btn-fav');
+            if (note.favorite) btnFav.classList.add('active');
+            else btnFav.classList.remove('active');
+
+            renderSidebar(); // Update active state highlight
+        }
+
+        // Auto Save
+        const titleInput = document.getElementById('note-title');
+        const contentInput = document.getElementById('note-content');
+        const folderSelect = document.getElementById('folder-select');
+        const favBtn = document.getElementById('btn-fav');
+        const delBtn = document.getElementById('btn-delete');
+
+        function triggerSave() {
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(performSave, 1000);
+        }
+
+        function performSave() {
+            if (!activeNoteId) return;
+
+            // Find current location
+            let currentFolder = null;
+            let note = null;
+            let noteIndex = -1;
+
+            for (const f of db.folders) {
+                const idx = f.notes.findIndex(n => n.id === activeNoteId);
+                if (idx !== -1) {
+                    currentFolder = f;
+                    noteIndex = idx;
+                    note = f.notes[idx];
+                    break;
+                }
+            }
+
+            if (!note) return;
+
+            // Update details
+            note.title = titleInput.value;
+            note.content = contentInput.innerHTML;
+            note.updatedAt = new Date().toISOString();
+
+            // Check for Folder Move
+            const newFolderId = folderSelect.value;
+            if (newFolderId !== currentFolder.id) {
+                // Move logic
+                currentFolder.notes.splice(noteIndex, 1);
+                const newFolder = db.folders.find(f => f.id === newFolderId);
+                if (newFolder) newFolder.notes.push(note);
+            }
+
+            saveData();
+            renderSidebar(); // Name might have changed
+        }
+
+        titleInput.addEventListener('input', triggerSave);
+        contentInput.addEventListener('input', triggerSave);
+
+        folderSelect.addEventListener('change', () => {
+            performSave();
+        });
+
+        favBtn.addEventListener('click', () => {
+            if (!activeNoteId) return;
+            // find note
+            for (const f of db.folders) {
+                const n = f.notes.find(x => x.id === activeNoteId);
+                if (n) {
+                    n.favorite = !n.favorite;
+                    if (n.favorite) favBtn.classList.add('active');
+                    else favBtn.classList.remove('active');
+                    performSave();
+                    break;
+                }
+            }
+        });
+
+        delBtn.addEventListener('click', () => {
+            if (!confirm('Delete this note?')) return;
+
+            for (const f of db.folders) {
+                const idx = f.notes.findIndex(x => x.id === activeNoteId);
+                if (idx !== -1) {
+                    f.notes.splice(idx, 1);
+                    saveData();
+                    break;
+                }
+            }
+
+            activeNoteId = null;
+            document.getElementById('editor-view').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'flex';
+            renderSidebar();
+        });
+
+        // -- ACTIONS --
+        function openModal(id) {
+            document.getElementById(id).classList.add('open');
+            // Update Select if needed
+            if (id === 'note-modal') updateSelects();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+
+        function createFolder() {
+            const name = document.getElementById('new-folder-name').value;
+            if (!name) return;
+
+            const newFolder = {
+                id: 'f_' + Date.now(),
+                name: name,
+                notes: []
+            };
+
+            db.folders.push(newFolder);
+            saveData();
+            renderSidebar();
+
+            document.getElementById('new-folder-name').value = '';
+            closeModal('folder-modal');
+        }
+
+        function createNote() {
+            const title = document.getElementById('new-note-title').value;
+            const folderId = document.getElementById('new-note-folder').value;
+
+            if (!title || !folderId) return;
+
+            const newNote = {
+                id: 'n_' + Date.now(),
+                title: title,
+                content: '',
+                favorite: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            const folder = db.folders.find(f => f.id === folderId);
+            if (folder) {
+                folder.notes.push(newNote);
+                activeFolderId = folderId; // Expand folder
+                saveData();
+                renderSidebar();
+                loadNote(newNote.id, folderId);
+            }
+
+            document.getElementById('new-note-title').value = '';
+            closeModal('note-modal');
+            document.getElementById('new-note-title').value = '';
+            closeModal('note-modal');
+        }
+
+        function openRenameFolder(e, id, name) {
+            e.stopPropagation();
+            document.getElementById('rename-folder-id').value = id;
+            document.getElementById('rename-folder-name').value = name;
+            openModal('folder-rename-modal');
+        }
+
+        function saveRenameFolder() {
+            const id = document.getElementById('rename-folder-id').value;
+            const name = document.getElementById('rename-folder-name').value;
+            if(!id || !name) return;
+
+            const folder = db.folders.find(f => f.id === id);
+            if(folder) {
+                folder.name = name;
+                saveData();
+                renderSidebar();
+                closeModal('folder-rename-modal');
+            }
+        }
+
+        function deleteFolder(e, id) {
+             e.stopPropagation();
+             if(!confirm('Delete this folder and all its notes? This cannot be undone.')) return;
+
+             const idx = db.folders.findIndex(f => f.id === id);
+             if(idx !== -1) {
+                 // Check if active note is in this folder
+                 const folder = db.folders[idx];
+                 if(folder.notes.some(n => n.id === activeNoteId)) {
+                     activeNoteId = null;
+                     document.getElementById('editor-view').style.display = 'none';
+                     document.getElementById('empty-state').style.display = 'flex';
+                 }
+
+                 db.folders.splice(idx, 1);
+                 
+                 // If no folders left, recreate default? Logic allows empty, but init fixes it.
+                 if(db.folders.length === 0) {
+                      db.folders.push({ id: 'f_default', name: 'General', notes: [] });
+                 }
+
+                 saveData();
+                 renderSidebar();
+             }
+        }
+
+        // -- RICH TEXT HELPERS --
+        function formatDoc(cmd, value = null) {
+            document.execCommand(cmd, false, value);
+            document.getElementById('note-content').focus();
+        }
+
+        // Init
+        init();
+
+    </script>
+</body>
+
+</html>

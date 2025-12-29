@@ -1,0 +1,459 @@
+:root {
+    --text-color: #333;
+    --bg-color: transparent;
+    --item-bg: rgba(0, 0, 0, 0.05);
+    --border-color: rgba(0, 0, 0, 0.1);
+    --primary-color: #1a73e8;
+    --sidebar-bg: rgba(0, 0, 0, 0.03);
+    --hover-bg: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] {
+    --text-color: #e0e0e0;
+    --item-bg: rgba(255, 255, 255, 0.05);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --primary-color: #8ab4f8;
+    --sidebar-bg: rgba(255, 255, 255, 0.03);
+    --hover-bg: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] select option {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    padding: 0;
+    margin: 0;
+    color: var(--text-color);
+    background: var(--bg-color);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    height: 100%;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.sidebar-header h3 {
+    margin: 0 0 20px 0;
+    font-size: 1.2rem;
+}
+
+.sidebar-section {
+    margin-bottom: 30px;
+}
+
+.section-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-color);
+    opacity: 0.6;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.action-btn {
+    width: 100%;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.2s;
+}
+
+.action-btn:hover {
+    opacity: 0.9;
+}
+
+.nav-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--text-color);
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: left;
+    cursor: pointer;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s;
+}
+
+.nav-btn:hover {
+    background: var(--hover-bg);
+}
+
+.nav-btn.active {
+    background: var(--item-bg);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Content */
+.content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    position: relative;
+}
+
+.view-section {
+    display: none;
+    height: 100%;
+    flex-direction: column;
+}
+
+.view-section.active {
+    display: flex;
+}
+
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.view-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+/* Calendar View */
+.calendar-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.control-btn {
+    background: var(--item-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.control-btn:hover {
+    background: var(--hover-bg);
+}
+
+.calendar-grid-header,
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--border-color);
+    /* Grid lines */
+    border: 1px solid var(--border-color);
+}
+
+.calendar-grid-header {
+    background: var(--bg-color);
+    border-bottom: none;
+}
+
+.calendar-grid-header div {
+    padding: 10px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    background: var(--bg-color);
+}
+
+.calendar-grid {
+    flex: 1;
+    background: var(--border-color);
+}
+
+.day-cell {
+    background: var(--bg-color);
+    min-height: 100px;
+    padding: 5px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--border-color);
+}
+
+.day-cell:hover {
+    background: var(--item-bg);
+}
+
+.day-number {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.day-cell.other-month {
+    opacity: 0.5;
+}
+
+.day-cell.today .day-number {
+    background: var(--primary-color);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cal-event-dot {
+    font-size: 0.75rem;
+    padding: 2px 4px;
+    border-radius: 3px;
+    background: rgba(26, 115, 232, 0.2);
+    color: var(--primary-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+[data-theme="dark"] .cal-event-dot {
+    background: rgba(138, 180, 248, 0.2);
+    color: #aecbfa;
+}
+
+/* List View (Accordion) */
+.filter-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.filter-controls input,
+.filter-controls select {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-color);
+}
+
+.event-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.accordion-item {
+    background: var(--item-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.accordion-header {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.accordion-header:hover {
+    background: var(--hover-bg);
+}
+
+.accordion-title {
+    font-weight: 600;
+    font-size: 1rem;
+    flex: 1;
+}
+
+.accordion-date {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-right: 15px;
+    min-width: 100px;
+    text-align: right;
+}
+
+.accordion-status {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.1);
+    font-weight: 500;
+}
+
+[data-theme="dark"] .accordion-status {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.accordion-content {
+    display: none;
+    padding: 15px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-color);
+    /* Slightly lighter/darker depending on theme setup, but bg-color is transparent so actually same as body */
+}
+
+.accordion-item.open .accordion-content {
+    display: block;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 10px 20px;
+    font-size: 0.9rem;
+}
+
+.detail-label {
+    opacity: 0.6;
+    font-weight: 500;
+    text-align: right;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-overlay.open {
+    display: flex;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    width: 500px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    color: #333;
+}
+
+[data-theme="dark"] .modal-content {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-modal {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: inherit;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+}
+
+[data-theme="dark"] .form-control {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-group label {
+    margin-bottom: 0;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: inherit;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}

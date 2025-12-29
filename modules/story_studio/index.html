@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --text-color: #333;
+            --bg-color: transparent;
+            --card-bg: #fff;
+            --sidebar-bg: #f5f5f5;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --primary-color: #1a73e8;
+            --hover-bg: rgba(0, 0, 0, 0.05);
+            --danger-color: #e53935;
+            --highlight-bg: #e8f0fe;
+        }
+
+        [data-theme="dark"] {
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --sidebar-bg: #121212;
+            --bg-color: #000000;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --primary-color: #8ab4f8;
+            --hover-bg: rgba(255, 255, 255, 0.1);
+            --highlight-bg: rgba(138, 180, 248, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 0;
+            margin: 0;
+            color: var(--text-color);
+            background: var(--bg-color);
+            transition: color 0.3s;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 250px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+
+        .action-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn-action {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-action:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .nav-section {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .nav-item {
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* Main Content Styling */
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* View Containers */
+        .view-container {
+            display: none;
+            height: 100%;
+        }
+
+        .view-container.active {
+            display: block;
+        }
+
+        /* Stories Grid View */
+        .stories-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: var(--text-color);
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: var(--hover-bg);
+        }
+
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        .story-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .story-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 200px;
+            position: relative;
+        }
+
+        .story-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .story-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .story-excerpt {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex-grow: 1;
+        }
+
+        .story-footer {
+            margin-top: 15px;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .story-stage {
+            padding: 2px 8px;
+            background: var(--hover-bg);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .btn-delete {
+            opacity: 0.5;
+            transition: opacity 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-delete:hover {
+            opacity: 1;
+            color: var(--danger-color);
+        }
+
+
+        /* Editor View Styling */
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 10px;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 10px;
+        }
+
+        .toolbar-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .toolbar-btn:hover,
+        .toolbar-btn.active {
+            background: var(--hover-bg);
+        }
+
+        .chapter-select,
+        .status-select {
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 5px;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .editor-text-area {
+            flex-grow: 1;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 40px;
+            overflow-y: auto;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            outline: none;
+            white-space: pre-wrap;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin-top: 0;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            outline: none;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Elements Popover */
+        .elements-popover {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            width: 350px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            display: none;
+            z-index: 100;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .elements-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            color: var(--text-color);
+            opacity: 0.7;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            opacity: 1;
+            border-bottom-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .element-item {
+            padding: 10px;
+            background: var(--hover-bg);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .element-item i.delete-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0.5;
+        }
+
+        .element-item i.delete-icon:hover {
+            opacity: 1;
+            color: var(--danger-color);
+        }
+
+        /* Library View */
+        .library-layout {
+            display: flex;
+            height: 100%;
+            gap: 20px;
+        }
+
+        .library-sidebar {
+            width: 220px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 100%;
+            height: fit-content;
+        }
+
+        .library-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* New Library Card Style */
+        .lib-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            padding-bottom: 20px;
+        }
+
+        .lib-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: auto;
+        }
+
+        .lib-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .lib-type-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+        }
+
+        .lib-card-content {
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .lib-card a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .lib-group-item {
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .lib-group-item:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .lib-group-item.active {
+            background-color: var(--highlight-bg);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="action-section">
+            <button class="btn-action" onclick="openNewStoryModal()">
+                <i class="fas fa-plus"></i> New Story
+            </button>
+            <button class="btn-action" onclick="openNewSceneModal()">
+                <i class="fas fa-film"></i> New Scene
+            </button>
+            <button class="btn-action" onclick="openAddElementModal(null, true)">
+                <i class="fas fa-cube"></i> New Element
+            </button>
+        </div>
+        <div class="nav-section">
+            <div class="nav-item active" onclick="switchView('stories')" id="nav-stories">
+                <i class="fas fa-book"></i> Stories
+            </div>
+            <div class="nav-item" onclick="switchView('scenes')" id="nav-scenes">
+                <i class="fas fa-clapperboard"></i> Scenes
+            </div>
+            <div class="nav-item" onclick="switchView('library')" id="nav-library">
+                <i class="fas fa-archive"></i> Library
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Stories View -->
+        <div id="view-stories" class="view-container active">
+            <div class="stories-header">
+                <h2>My Stories</h2>
+                <div class="filter-bar">
+                    <button class="filter-btn active" onclick="filterStories('All')">All</button>
+                    <button class="filter-btn" onclick="filterStories('Draft')">Drafts</button>
+                    <button class="filter-btn" onclick="filterStories('Completed')">Completed</button>
+                </div>
+            </div>
+            <div class="story-grid" id="story-grid">
+                <!-- Javascript will populate this -->
+            </div>
+        </div>
+
+        <!-- Scenes View -->
+        <div id="view-scenes" class="view-container">
+            <div class="stories-header">
+                <h2>My Scenes</h2>
+            </div>
+            <div class="story-grid" id="scene-grid">
+                <!-- Javascript will populate this -->
+            </div>
+        </div>
+
+        <!-- Editor View -->
+        <div id="view-editor" class="view-container">
+            <!-- Populated via JS -->
+            <div class="editor-container">
+                <div class="editor-header">
+                    <div>
+                        <button class="btn-secondary" onclick="exitEditor()"
+                            style="padding: 5px 10px; border-radius:4px; border:none; margin-right: 10px; cursor: pointer;">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <span id="editor-story-title" style="font-weight: 700; font-size: 1.1rem;">Story Title</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="editor-status-select" class="status-select"
+                            onchange="updateStoryStatus(this.value)">
+                            <option value="Idea">Idea</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Revising">Revising</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                        <button class="btn-secondary" onclick="exportStory()" title="Export Story">
+                            <i class="fas fa-file-word"></i> Export
+                        </button>
+                        <button class="btn-secondary" id="btn-insert-scene" onclick="openScenePicker()"
+                            title="Insert Scene" style="display:none">
+                            <i class="fas fa-film"></i> Insert Scene
+                        </button>
+                        <button class="btn-action btn-secondary" onclick="toggleElementsPanel()">
+                            <i class="fas fa-list"></i> Elements
+                        </button>
+                    </div>
+                </div>
+
+                <div class="editor-toolbar">
+                    <button class="toolbar-btn" onclick="formatDoc('bold')" title="Bold"><i
+                            class="fas fa-bold"></i></button>
+                    <button class="toolbar-btn" onclick="formatDoc('italic')" title="Italic"><i
+                            class="fas fa-italic"></i></button>
+                    <button class="toolbar-btn" onclick="formatDoc('underline')" title="Underline"><i
+                            class="fas fa-underline"></i></button>
+                    <div style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 10px;"></div>
+                    <select id="chapter-select" class="chapter-select" onchange="handleChapterChange()">
+                        <!-- Chapters loaded here -->
+                    </select>
+                </div>
+
+                <div id="editor-content" class="editor-text-area" contenteditable="true" oninput="debouncedSave()">
+                    <!-- Content -->
+                </div>
+            </div>
+
+            <!-- Elements Popover -->
+            <div id="elements-popover" class="elements-popover">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h4 style="margin:0">Story Elements</h4>
+                    <button onclick="toggleElementsPanel()"
+                        style="background:none; border:none; cursor:pointer; color:var(--text-color)"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <div class="elements-tabs">
+                    <div
+                        style="padding: 10px; font-weight: 600; font-size: 0.9rem; opacity: 0.7; border-bottom: 1px solid var(--border-color);">
+                        Story Elements
+                    </div>
+                </div>
+                <div id="elements-list">
+                    <!-- Loaded via JS -->
+                </div>
+                <button class="btn-action btn-secondary" style="width:100%; margin-top:10px;"
+                    onclick="openAddElementModal()">
+                    <i class="fas fa-plus"></i> New Element
+                </button>
+            </div>
+        </div>
+
+        <!-- Library View -->
+        <div id="view-library" class="view-container">
+            <div class="stories-header">
+                <h2>Library</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-secondary" onclick="openNewGroupModal()"><i class="fas fa-folder-plus"></i> New
+                        Group</button>
+                    <button class="btn-secondary" onclick="openImportModal()"><i class="fas fa-file-import"></i> Import
+                        to Story</button>
+                </div>
+            </div>
+            <div class="library-layout">
+                <div class="library-sidebar" id="library-groups">
+                    <!-- Groups -->
+                </div>
+                <div class="library-content">
+                    <h4 id="active-group-name"
+                        style="margin-top:0; font-size:1.1rem; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+                        All Elements</h4>
+                    <div class="lib-grid" id="library-grid">
+                        <!-- Items -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Story Modal -->
+    <div id="modal-new-story" class="modal-overlay">
+        <div class="modal">
+            <h3 id="modal-story-title">Create New Story</h3>
+            <input type="hidden" id="new-story-id">
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="new-story-title" class="form-control" placeholder="Enter story title">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="new-story-desc" class="form-control" rows="3" placeholder="Short synopsis"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Genre</label>
+                <div id="new-story-genre-list"
+                    style="border:1px solid var(--border-color); border-radius:6px; padding:10px; max-height:120px; overflow-y:auto;">
+                    <!-- Checkboxes -->
+                </div>
+                <div style="display:flex; gap:5px; margin-top:5px;">
+                    <input type="text" id="new-genre-input" placeholder="Add Genre" class="form-control"
+                        style="font-size:0.8rem; padding:4px 8px;">
+                    <button type="button" class="btn-action btn-secondary" onclick="addNewGenre()"
+                        style="padding:4px 10px;">+</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Initial Stage</label>
+                <select id="new-story-stage" class="form-control">
+                    <option value="Idea">Idea</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Revising">Revising</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-action btn-secondary" onclick="closeModal('modal-new-story')">Cancel</button>
+                <button class="btn-action" onclick="saveStory()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Scene Modal -->
+    <div id="modal-new-scene" class="modal-overlay">
+        <div class="modal">
+            <h3>Create New Scene</h3>
+            <input type="hidden" id="new-scene-id">
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="new-scene-title" class="form-control" placeholder="Scene Title">
+            </div>
+            <div class="form-group">
+                <label>Genre / Type</label>
+                <input type="text" id="new-scene-genre" class="form-control" placeholder="e.g. Action, Dialogue">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-action btn-secondary" onclick="closeModal('modal-new-scene')">Cancel</button>
+                <button class="btn-action" onclick="saveNewScene()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scene Picker Modal -->
+    <div id="modal-scene-picker" class="modal-overlay">
+        <div class="modal" style="width: 500px; max-height: 80vh; display:flex; flex-direction:column;">
+            <h3>Insert Scene</h3>
+            <div
+                style="flex:1; overflow-y:auto; margin: 10px 0; border:1px solid var(--border-color); border-radius:6px;">
+                <div id="scene-picker-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-action btn-secondary" onclick="closeModal('modal-scene-picker')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Element Modal -->
+    <div id="modal-add-element" class="modal-overlay">
+        <div class="modal">
+            <h3>New Element</h3>
+            <!-- Resource Only Content -->
+            <div id="element-dynamic-fields">
+                <div class="form-group"><label>Name</label><input id="el-name" class="form-control"></div>
+                <div class="form-group"><label>Category</label><input id="el-category" class="form-control"
+                        placeholder="e.g. Character"></div>
+                <div class="form-group"><label>Description</label><textarea id="el-desc"
+                        class="form-control"></textarea></div>
+            </div>
+
+            <div class="form-group" id="library-group-select-container" style="display:none; margin-top:10px;">
+                <label>Library Groups</label>
+                <div id="new-element-groups-container"
+                    style="max-height:100px; overflow-y:auto; border:1px solid var(--border-color); padding:10px; border-radius:6px;">
+                    <!-- Checkboxes -->
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-action btn-secondary" onclick="closeModal('modal-add-element')">Cancel</button>
+                <button class="btn-action" onclick="saveNewElement()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Group Modal -->
+    <div id="modal-new-group" class="modal-overlay">
+        <div class="modal">
+            <h3 id="modal-group-title">New Library Group</h3>
+            <input type="hidden" id="new-group-id">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="new-group-name" class="form-control">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-action btn-secondary" onclick="closeModal('modal-new-group')">Cancel</button>
+                <button class="btn-action" onclick="saveLibraryGroup()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="modal-import" class="modal-overlay">
+        <div class="modal">
+            <h3>Import to Story</h3>
+            <div class="form-group">
+                <label>Select items to import</label>
+                <div id="import-list"
+                    style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px;">
+                    <!-- Checkboxes -->
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Target Story</label>
+                <select id="import-target-story" class="form-control">
+                    <!-- Stories -->
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-action btn-secondary" onclick="closeModal('modal-import')">Cancel</button>
+                <button class="btn-action" onclick="runImport()">Import</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- State ---
+        let stories = [];
+        let scenes = []; // New Scenes Array
+        let library = { groups: [], elements: [] };
+
+        let activeMode = 'story'; // 'story' or 'scene'
+        let currentStoryId = null;
+        let currentSceneId = null; // New Track
+        let currentChapterId = null;
+        let activeElementTab = 'resources';
+        let activeLibraryGroup = 'global';
+        let saveTimeout;
+
+        let isAddingToLibrary = false;
+
+        // --- Init ---
+        async function init() {
+            await Promise.all([loadStories(), loadScenes(), loadLibrary()]);
+
+            // Check theme
+            if (window.parent) {
+                window.parent.postMessage({ type: 'request-theme' }, '*');
+            }
+
+            // Handle Quick Actions
+            window.addEventListener('message', function (event) {
+                const data = event.data;
+                if (data.type === 'theme-change') {
+                    document.documentElement.setAttribute('data-theme', data.theme);
+                } else if (data.type === 'open-new-story') {
+                    openNewStoryModal();
+                } else if (data.type === 'open-new-element') {
+                    openAddElementModal(null, true);
+                } else if (data.module === 'story_studio' && data.view === 'scenes') {
+                    switchView('scenes');
+                } else if (data.module === 'story_studio' && data.view === 'new-scene') {
+                    openNewSceneModal();
+                }
+            });
+
+            // Initial element form render
+            updateElementForm('resources');
+        }
+
+        // --- API ---
+        async function loadStories() {
+            try {
+                const res = await fetch('/api/storage/stories.json');
+                if (res.ok) {
+                    stories = await res.json();
+                    if (!Array.isArray(stories)) stories = [];
+                    renderStories();
+                }
+            } catch (e) { console.error("Failed to load stories", e); }
+        }
+
+        async function loadScenes() {
+            try {
+                const res = await fetch('/api/storage/scenes.json');
+                if (res.ok) {
+                    scenes = await res.json();
+                    if (!Array.isArray(scenes)) scenes = [];
+                    renderScenes();
+                }
+            } catch (e) { console.error("Failed to load scenes", e); }
+        }
+
+        async function loadLibrary() {
+            try {
+                const res = await fetch('/api/storage/library.json');
+                if (res.ok) library = await res.json();
+                else library = { groups: [{ id: 'global', name: 'Global' }], elements: [] };
+                renderLibrary();
+            } catch (e) {
+                console.error("Error loading library", e);
+            }
+        }
+
+        async function saveStoriesToDB() {
+            await fetch('/api/storage/stories.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: stories })
+            });
+        }
+
+        async function saveLibraryToDB() {
+            await fetch('/api/storage/library.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: library })
+            });
+        }
+
+        // --- Navigation ---
+        function switchView(viewName) {
+            document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${viewName}`).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const nav = document.getElementById(`nav-${viewName}`);
+            if (nav) nav.classList.add('active');
+
+            if (viewName === 'stories') {
+                currentStoryId = null;
+                renderStories();
+            } else if (viewName === 'library') {
+                renderLibrary();
+            } else if (viewName === 'scenes') {
+                renderScenes();
+            }
+        }
+
+        // --- Dashboard / Stories List ---
+        function renderStories(filter = 'All') {
+            const grid = document.getElementById('story-grid');
+            grid.innerHTML = '';
+
+            const filtered = stories.filter(s => filter === 'All' || s.stage === filter);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; opacity:0.6; padding:50px;">No stories found. Create one!</div>`;
+            } else {
+                filtered.forEach(story => {
+                    const card = document.createElement('div');
+                    card.className = 'story-card';
+                    card.onclick = (e) => {
+                        if (!e.target.closest('.btn-delete')) {
+                            openEditor(story.id);
+                        }
+                    };
+
+                    const dateStr = new Date(story.created_at).toLocaleDateString();
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="story-title">${story.title}</div>
+                            <div class="story-excerpt">${story.description}</div>
+                        </div>
+                        <div class="story-footer">
+                            <div style="display:flex; gap:10px;">
+                                <i class="fas fa-trash btn-delete" onclick="deleteStory('${story.id}')" title="Delete"></i>
+                                <i class="fas fa-edit btn-delete" onclick="openNewStoryModal('${story.id}')" title="Edit" style="color:var(--text-color); opacity:0.6;"></i>
+                            </div>
+                            <span>${dateStr}</span>
+                            <span class="story-stage">${story.stage}</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+
+            // Update filter buttons UI
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const btnText = btn.textContent;
+                let btnStatus = btnText;
+                if (btnText === 'Drafts') btnStatus = 'Draft';
+                // Toggle active class correctly
+                btn.classList.toggle('active', btnStatus === filter);
+            });
+        }
+
+        function filterStories(filter) {
+            renderStories(filter);
+        }
+
+        function openNewStoryModal(storyId = null) {
+            if (storyId) {
+                const s = stories.find(st => st.id === storyId);
+                document.getElementById('modal-story-title').textContent = 'Edit Story';
+                document.getElementById('new-story-id').value = s.id;
+                document.getElementById('new-story-title').value = s.title;
+                document.getElementById('new-story-desc').value = s.description;
+                document.getElementById('new-story-desc').value = s.description;
+                // document.getElementById('new-story-genre').value = s.genre;
+                document.getElementById('new-story-stage').value = s.stage;
+                renderGenres(s.genre);
+            } else {
+                document.getElementById('modal-story-title').textContent = 'Create New Story';
+                document.getElementById('new-story-id').value = '';
+                document.getElementById('new-story-title').value = '';
+                document.getElementById('new-story-desc').value = '';
+                renderGenres([]);
+            }
+            document.getElementById('modal-new-story').style.display = 'flex';
+        }
+
+        // --- Genre Logic ---
+        function renderGenres(selectedGenres = []) {
+            if (typeof selectedGenres === 'string') selectedGenres = [selectedGenres];
+            if (!selectedGenres) selectedGenres = [];
+
+            if (!library.genres) library.genres = [];
+
+            const list = document.getElementById('new-story-genre-list');
+            list.innerHTML = '';
+
+            library.genres.forEach(g => {
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.justifyContent = 'space-between';
+                row.style.alignItems = 'center';
+                row.style.marginBottom = '5px';
+
+                const isChecked = selectedGenres.includes(g) ? 'checked' : '';
+
+                row.innerHTML = `
+                    <label style="display:flex; align-items:center; width:100%; cursor:pointer; margin:0; overflow:hidden;">
+                        <input type="checkbox" class="new-story-genre-chk" value="${g}" ${isChecked} style="margin-right:8px;">
+                        <span style="font-size:0.9rem; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${g}</span>
+                    </label>
+                    <i class="fas fa-trash" style="cursor:pointer; opacity:0.5; font-size:0.8rem; color:var(--danger-color); margin-left:5px;" onclick="deleteGenre('${g}')"></i>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        async function addNewGenre() {
+            const input = document.getElementById('new-genre-input');
+            const val = input.value.trim();
+            if (!val) return;
+
+            if (!library.genres) library.genres = [];
+            if (library.genres.includes(val)) {
+                alert("Genre already exists");
+                return;
+            }
+            library.genres.push(val);
+            await saveLibraryToDB();
+
+            input.value = '';
+            const selected = Array.from(document.querySelectorAll('.new-story-genre-chk:checked')).map(cb => cb.value);
+            renderGenres(selected);
+        }
+
+        async function deleteGenre(gName) {
+            if (!confirm(`Delete genre "${gName}"?`)) return;
+            library.genres = library.genres.filter(g => g !== gName);
+            await saveLibraryToDB();
+            const selected = Array.from(document.querySelectorAll('.new-story-genre-chk:checked')).map(cb => cb.value);
+            renderGenres(selected);
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        async function saveStory() {
+            const id = document.getElementById('new-story-id').value;
+            const title = document.getElementById('new-story-title').value;
+            const desc = document.getElementById('new-story-desc').value;
+            // Get Genres
+            const genreCheckboxes = document.querySelectorAll('.new-story-genre-chk:checked');
+            const genres = Array.from(genreCheckboxes).map(cb => cb.value);
+            const stage = document.getElementById('new-story-stage').value;
+
+            if (!title) return alert('Title is required');
+
+            if (id) {
+                // Update
+                const story = stories.find(s => s.id === id);
+                if (story) {
+                    story.title = title;
+                    story.description = desc;
+                    story.genre = genres;
+                    story.stage = stage;
+                    story.updated_at = new Date().toISOString();
+                }
+            } else {
+                // Create
+                const newStory = {
+                    id: crypto.randomUUID(),
+                    title,
+                    description: desc,
+                    genre: genres,
+                    stage,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    chapters: [
+                        { id: crypto.randomUUID(), title: 'Prologue', content: '<p>Start writing...</p>' }
+                    ],
+                    elements: { resources: [], links: [], notes: [] }
+                };
+                stories.push(newStory);
+            }
+
+            await saveStoriesToDB();
+            closeModal('modal-new-story');
+            renderStories();
+        }
+
+        async function deleteStory(id) {
+            if (!confirm("Are you sure you want to delete this story?")) return;
+            stories = stories.filter(s => s.id !== id);
+            await saveStoriesToDB();
+            renderStories();
+        }
+
+        // --- Editor ---
+        function openEditor(storyId) {
+            activeMode = 'story'; // Set Mode
+            currentStoryId = storyId;
+            const story = stories.find(s => s.id === storyId);
+            if (!story) return;
+
+            document.getElementById('editor-story-title').textContent = story.title;
+
+            // Show Story Controls
+            document.getElementById('editor-status-select').style.display = 'block';
+            document.getElementById('chapter-select').style.display = 'block';
+            document.getElementById('btn-insert-scene').style.display = 'inline-block';
+
+            // set status
+            document.getElementById('editor-status-select').value = story.stage;
+
+            // Setup Chapters
+            updateChapterDropdown(story);
+
+            // Load first chapter
+            if (story.chapters.length > 0) {
+                currentChapterId = story.chapters[0].id;
+                loadChapterContent(story, currentChapterId);
+            }
+
+            switchView('editor');
+            document.getElementById('elements-popover').style.display = 'none';
+        }
+
+        function updateChapterDropdown(story) {
+            const select = document.getElementById('chapter-select');
+            select.innerHTML = '';
+            story.chapters.forEach(ch => {
+                const opt = document.createElement('option');
+                opt.value = ch.id;
+                opt.textContent = ch.title;
+                select.appendChild(opt);
+            });
+            // Add "New" option
+            const newOpt = document.createElement('option');
+            newOpt.value = 'new_chapter_option';
+            newOpt.textContent = '+ New Chapter';
+            select.appendChild(newOpt);
+        }
+
+        function loadChapterContent(story, chapterId) {
+            const ch = story.chapters.find(c => c.id === chapterId);
+            const editor = document.getElementById('editor-content');
+            if (ch) {
+                editor.innerHTML = ch.content || '';
+                document.getElementById('chapter-select').value = chapterId;
+            }
+        }
+
+        async function handleChapterChange() {
+            saveCurrentChapter();
+
+            const newVal = document.getElementById('chapter-select').value;
+            if (newVal === 'new_chapter_option') {
+                const name = prompt("Enter Chapter Name:", "Chapter " + (stories.find(s => s.id === currentStoryId).chapters.length + 1));
+                if (name) {
+                    const newCh = { id: crypto.randomUUID(), title: name, content: '' };
+                    const story = stories.find(s => s.id === currentStoryId);
+                    story.chapters.push(newCh);
+                    currentChapterId = newCh.id;
+                    updateChapterDropdown(story);
+                    loadChapterContent(story, currentChapterId);
+                    saveStoriesToDB();
+                } else {
+                    document.getElementById('chapter-select').value = currentChapterId;
+                }
+            } else {
+                currentChapterId = newVal;
+                const story = stories.find(s => s.id === currentStoryId);
+                loadChapterContent(story, currentChapterId);
+            }
+        }
+
+        function formatDoc(cmd, value = null) {
+            document.execCommand(cmd, false, value);
+            document.getElementById('editor-content').focus();
+        }
+
+        function debouncedSave() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveEditorContent, 1000); // Changed handler
+        }
+
+        function saveEditorContent() {
+            if (activeMode === 'story') saveCurrentChapter();
+            else if (activeMode === 'scene') saveCurrentScene();
+        }
+
+        function saveCurrentScene() {
+            if (!currentSceneId) return;
+            const scene = scenes.find(s => s.id === currentSceneId);
+            if (!scene) return;
+
+            const content = document.getElementById('editor-content').innerHTML;
+            if (scene.content !== content) {
+                scene.content = content;
+                scene.updatedAt = new Date().toISOString();
+                // Save
+                fetch('/api/storage/scenes.json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: scenes })
+                }); // No await needed for auto-save
+            }
+        }
+
+        function saveCurrentChapter() {
+            if (!currentStoryId || !currentChapterId) return;
+            const story = stories.find(s => s.id === currentStoryId);
+            const ch = story.chapters.find(c => c.id === currentChapterId);
+            const content = document.getElementById('editor-content').innerHTML;
+
+            if (ch && ch.content !== content) {
+                ch.content = content;
+                story.updated_at = new Date().toISOString();
+                saveStoriesToDB();
+            }
+        }
+
+        async function updateStoryStatus(newStatus) {
+            if (!currentStoryId) return;
+            const story = stories.find(s => s.id === currentStoryId);
+            story.stage = newStatus;
+            await saveStoriesToDB();
+        }
+
+        function exportStory() {
+            if (!currentStoryId) return;
+            const story = stories.find(s => s.id === currentStoryId);
+
+            let content = `Title: ${story.title}\nDescription: ${story.description}\n\n`;
+
+            story.chapters.forEach(ch => {
+                // For simplicity, we keep HTML tags to preserve some formatting in Word, 
+                // or we could strip them. Word handles HTML reasonably well.
+                // Let's strip simply but keep paragraphs.
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = ch.content;
+                content += `--- ${ch.title} ---\n\n${tempDiv.innerText}\n\n`;
+            });
+
+            // Mime type for Word
+            const blob = new Blob([content], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${story.title.replace(/\s+/g, '_')}.doc`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // --- Elements Logic ---
+        function toggleElementsPanel() {
+            const panel = document.getElementById('elements-popover');
+            if (panel.style.display === 'block') {
+                panel.style.display = 'none';
+            } else {
+                panel.style.display = 'block';
+                renderElementsList();
+            }
+        }
+
+        // REMOVED: switchElementTab function as tabs are removed
+
+        function renderElementsList() {
+            const list = document.getElementById('elements-list');
+            list.innerHTML = '';
+
+            const story = stories.find(s => s.id === currentStoryId);
+            if (!story) return;
+
+            if (!story.elements) story.elements = { resources: [], links: [], notes: [] };
+
+            // Unify all items
+            let allItems = [];
+            if (story.elements.resources) allItems = allItems.concat(story.elements.resources.map(i => ({ ...i, _type: 'resource' })));
+            if (story.elements.links) allItems = allItems.concat(story.elements.links.map(i => ({ ...i, _type: 'link' })));
+            if (story.elements.notes) allItems = allItems.concat(story.elements.notes.map(i => ({ ...i, _type: 'note' })));
+
+            // Sort by creation or name? Name for now.
+            allItems.sort((a, b) => {
+                const na = a.name || a.title || 'Untitled';
+                const nb = b.name || b.title || 'Untitled';
+                return na.localeCompare(nb);
+            });
+
+            if (allItems.length === 0) {
+                list.innerHTML = '<div style="opacity:0.6; font-size:0.8rem; text-align:center;">No items yet.</div>';
+                return;
+            }
+
+            allItems.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'element-item';
+
+                let contentHTML = '';
+                const typeLabel = (item._type || 'item').toUpperCase();
+
+                if (item._type === 'resource') {
+                    contentHTML = `
+                        <div style="font-weight:600; font-size:0.9rem;">${item.name || item.content?.name || 'Untitled'}</div>
+                        <div style="font-size:0.8rem; opacity:0.7;">${item.category || item.content?.category || ''}</div>
+                    `;
+                } else if (item._type === 'link') {
+                    contentHTML = `
+                        <a href="${item.url || item.content?.url}" target="_blank" style="font-weight:600; font-size:0.9rem;">${item.title || item.content?.title || 'Link'}</a>
+                    `;
+                } else if (item._type === 'note') {
+                    contentHTML = `
+                        <div style="font-size:0.85rem; white-space:pre-wrap;">${(item.content?.content || item.content || '').substring(0, 50)}...</div>
+                    `;
+                }
+
+                itemDiv.innerHTML = `
+                    <div style="flex:1;">
+                         <div style="font-size:0.65rem; opacity:0.5; margin-bottom:2px;">${typeLabel}</div>
+                         ${contentHTML}
+                    </div>
+                    <div style="display:flex; gap:5px; align-items:center;">
+                         <!-- Only allow edit for Resources for now based on modal constraint -->
+                         ${item._type === 'resource' ? `<i class="fas fa-edit" style="cursor:pointer; opacity:0.5;" onclick="editStoryElement('${item.id}', '${item._type}')"></i>` : ''}
+                         <i class="fas fa-trash" style="cursor:pointer; color:var(--danger-color); opacity:0.5;" onclick="deleteElement('${item.id}', '${item._type}')"></i>
+                    </div>
+                `;
+                list.appendChild(itemDiv);
+            });
+        }
+
+        function editStoryElement(id, type) {
+            editingElementId = id;
+            // Find content
+            const story = stories.find(s => s.id === currentStoryId);
+            let item = null;
+            if (type === 'resource') item = story.elements.resources.find(i => i.id === id);
+            // Other types not supported for edit yet
+
+            if (item) {
+                document.getElementById('modal-add-element').style.display = 'flex';
+                document.getElementById('modal-add-element').querySelector('h3').textContent = 'Edit Element';
+                document.getElementById('el-name').value = item.name || item.content?.name;
+                document.getElementById('el-category').value = item.category || item.content?.category;
+                document.getElementById('el-desc').value = item.description || item.content?.description;
+                document.getElementById('library-group-select-container').style.display = 'none';
+            }
+        }
+
+        // Mode: 'story' (local) vs 'library' (global)
+        let editingElementId = null;
+
+        async function populateGroupsCheckboxList(selectedGroups = []) {
+            const container = document.getElementById('new-element-groups-container');
+            container.innerHTML = '';
+
+            // Ensure global exists
+            if (!library.groups.find(g => g.id === 'global')) {
+                library.groups.unshift({ id: 'global', name: 'Global' });
+            }
+
+            library.groups.forEach(g => {
+                const div = document.createElement('div');
+                div.style.marginBottom = '5px';
+                const isChecked = selectedGroups.includes(g.id) || (selectedGroups.length === 0 && g.id === 'global') ? 'checked' : '';
+
+                div.innerHTML = `
+                    <label style="display:flex; align-items:center; font-weight:normal; margin:0;">
+                        <input type="checkbox" name="el-group-checkbox" value="${g.id}" ${isChecked} style="margin-right:8px;">
+                        ${g.name}
+                    </label>
+                 `;
+                container.appendChild(div);
+            });
+        }
+
+        function openAddElementModal(passedType, toLibrary = false) {
+            isAddingToLibrary = toLibrary;
+            editingElementId = null; // Reset edit mode
+            document.getElementById('modal-add-element').querySelector('h3').textContent = 'New Element';
+            document.getElementById('modal-add-element').style.display = 'flex';
+
+            // Reset Form
+            document.getElementById('el-name').value = '';
+            document.getElementById('el-category').value = '';
+            document.getElementById('el-desc').value = '';
+
+            // Setup Group Select for library
+            if (toLibrary) {
+                document.getElementById('library-group-select-container').style.display = 'block';
+                populateGroupsCheckboxList(['global']); // Default to global
+            } else {
+                document.getElementById('library-group-select-container').style.display = 'none';
+            }
+        }
+
+        // REMOVED updateElementForm as we are now Resource-only hardcoded in HTML
+
+        async function saveNewElement() {
+            // Resource Only
+            const content = {
+                name: document.getElementById('el-name').value,
+                category: document.getElementById('el-category').value,
+                description: document.getElementById('el-desc').value
+            };
+            if (!content.name) return alert("Name required");
+
+            // Get Groups
+            const checkboxes = document.querySelectorAll('input[name="el-group-checkbox"]:checked');
+            const selectedGroups = Array.from(checkboxes).map(cb => cb.value);
+
+            if (editingElementId) {
+                // UPDATE Existing
+                if (isAddingToLibrary) {
+                    const item = library.elements.find(e => e.id === editingElementId);
+                    if (item) {
+                        item.content = content;
+                        item.groups = selectedGroups;
+                        await saveLibraryToDB();
+                        renderLibrary();
+                    }
+                } else {
+                    // Story Local Update (Resource Only for now in this modal)
+                    const story = stories.find(s => s.id === currentStoryId);
+                    if (story) {
+                        const item = story.elements['resources'].find(e => e.id === editingElementId);
+                        if (item) {
+                            Object.assign(item, content); // merge or replace
+                            await saveStoriesToDB();
+                            renderElementsList();
+                        }
+                    }
+                }
+            } else {
+                // CREATE New
+                const id = crypto.randomUUID();
+
+                if (isAddingToLibrary) {
+                    library.elements.push({
+                        id,
+                        type: 'resource',
+                        content,
+                        groups: selectedGroups
+                    });
+                    await saveLibraryToDB();
+                    if (document.getElementById('view-library').classList.contains('active')) renderLibrary();
+                } else {
+                    // Story Local
+                    const story = stories.find(s => s.id === currentStoryId);
+                    if (!story) return;
+
+                    const newItem = { id, ...content };
+                    story.elements['resources'].push(newItem);
+                    await saveStoriesToDB();
+                    renderElementsList();
+                }
+            }
+            closeModal('modal-add-element');
+        }
+
+        async function deleteElement(id, type) {
+            const story = stories.find(s => s.id === currentStoryId);
+            if (!story) return;
+            // Pluralize type
+            const listKey = type + 's';
+            if (story.elements[listKey]) {
+                story.elements[listKey] = story.elements[listKey].filter(i => i.id !== id);
+                await saveStoriesToDB();
+                renderElementsList();
+            }
+        }
+
+        // --- Library Logic ---
+        function renderLibrary() {
+            // Sidebar Groups
+            const sidebar = document.getElementById('library-groups');
+            sidebar.innerHTML = '';
+            library.groups.forEach(g => {
+                const el = document.createElement('div');
+                el.className = `lib-group-item ${g.id === activeLibraryGroup ? 'active' : ''}`;
+
+                const span = document.createElement('span');
+                span.textContent = g.name;
+                el.appendChild(span);
+
+                if (g.id !== 'global') {
+                    const actions = document.createElement('div');
+                    actions.style.fontSize = '0.8rem';
+                    actions.style.opacity = '0.6';
+                    actions.innerHTML = `
+                        <i class="fas fa-edit" style="margin-right:5px; cursor:pointer;" title="Edit" data-action="edit"></i>
+                        <i class="fas fa-trash" style="cursor:pointer; color:var(--danger-color);" title="Delete" data-action="delete"></i>
+                    `;
+                    actions.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        // Handle actions
+                        const action = e.target.dataset.action;
+                        if (action === 'edit') editLibraryGroup(g.id);
+                        if (action === 'delete') deleteLibraryGroup(g.id);
+                    });
+                    el.appendChild(actions);
+                }
+
+                el.onclick = () => { activeLibraryGroup = g.id; renderLibrary(); };
+                sidebar.appendChild(el);
+            });
+
+            // Grid
+            const grid = document.getElementById('library-grid');
+            grid.innerHTML = '';
+            document.getElementById('active-group-name').textContent = library.groups.find(g => g.id === activeLibraryGroup)?.name || 'Unknown';
+
+            // Items in group
+            const items = library.elements.filter(e => e.groups.includes(activeLibraryGroup));
+            if (items.length === 0) {
+                grid.innerHTML = '<div style="opacity:0.5; padding:20px; grid-column:1/-1;">Empty Group</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'lib-card';
+                // Highlight if selected (optional, can be handled by css but we just check the box)
+
+                const typeLabel = item.type.toUpperCase();
+                let inner = '';
+
+                if (item.type === 'resource') {
+                    inner = `
+                        <div class="lib-card-content">
+                            <div style="font-weight:600; margin-bottom:4px;">${item.content.name}</div>
+                            <div style="font-size:0.85rem; opacity:0.8; margin-bottom:4px;">${item.content.category}</div>
+                            <div style="font-size:0.85rem; opacity:0.6;">${item.content.description || ''}</div>
+                        </div>
+                    `;
+                } else if (item.type === 'link') {
+                    inner = `
+                         <div class="lib-card-content">
+                            <a href="${item.content.url}" target="_blank" style="font-weight:600;"><i class="fas fa-external-link-alt"></i> ${item.content.title}</a>
+                        </div>
+                    `;
+                } else if (item.type === 'note') {
+                    inner = `
+                        <div class="lib-card-content" style="white-space: pre-wrap;">${item.content.content}</div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; gap:8px;">
+                            <i class="fas fa-edit" style="cursor:pointer; opacity:0.5; font-size:0.8rem;" onclick="editLibraryItem('${item.id}')" title="Edit"></i>
+                            <i class="fas fa-trash" style="cursor:pointer; opacity:0.5; font-size:0.8rem; color:var(--danger-color);" onclick="deleteLibraryItem('${item.id}')" title="Delete"></i>
+                        </div>
+                    </div>
+                    ${inner}`;
+                grid.appendChild(card);
+            });
+        }
+
+        async function deleteLibraryItem(id) {
+            if (!confirm("Delete this library item?")) return;
+            library.elements = library.elements.filter(e => e.id !== id);
+            await saveLibraryToDB();
+            renderLibrary();
+        }
+
+        function openNewGroupModal() {
+            document.getElementById('modal-group-title').textContent = 'New Library Group';
+            document.getElementById('new-group-id').value = '';
+            document.getElementById('new-group-name').value = '';
+            document.getElementById('modal-new-group').style.display = 'flex';
+        }
+
+        async function saveLibraryGroup() {
+            const id = document.getElementById('new-group-id').value;
+            const name = document.getElementById('new-group-name').value;
+            if (!name) return;
+
+            if (id) {
+                // Edit
+                const g = library.groups.find(gr => gr.id === id);
+                if (g) g.name = name;
+            } else {
+                // Create
+                library.groups.push({ id: crypto.randomUUID(), name });
+            }
+            await saveLibraryToDB();
+            closeModal('modal-new-group');
+            renderLibrary();
+        }
+
+        function editLibraryGroup(id) {
+            const g = library.groups.find(gr => gr.id === id);
+            if (!g) return;
+            document.getElementById('modal-group-title').textContent = 'Edit Library Group';
+            document.getElementById('new-group-id').value = g.id;
+            document.getElementById('new-group-name').value = g.name;
+            document.getElementById('modal-new-group').style.display = 'flex';
+        }
+
+        async function deleteLibraryGroup(id) {
+            if (!confirm("Delete this group? Elements will remain in Global.")) return;
+
+            // Remove group from all elements
+            library.elements.forEach(e => {
+                if (e.groups.includes(id)) {
+                    e.groups = e.groups.filter(gid => gid !== id);
+                    if (e.groups.length === 0) e.groups.push('global'); // fallback
+                }
+            });
+
+            library.groups = library.groups.filter(g => g.id !== id);
+
+            if (activeLibraryGroup === id) activeLibraryGroup = 'global';
+
+            await saveLibraryToDB();
+            renderLibrary();
+        }
+
+        function editLibraryItem(id) {
+            const item = library.elements.find(e => e.id === id);
+            if (!item) return;
+
+            isAddingToLibrary = true;
+            editingElementId = id;
+
+            document.getElementById('modal-add-element').style.display = 'flex';
+            document.getElementById('modal-add-element').querySelector('h3').textContent = 'Edit Element';
+
+            // Resource editing only for now in this standardized modal
+            if (item.type !== 'resource') {
+                alert("This modal only supports editing Resources currently.");
+                return;
+            }
+
+            // Fill Data
+            setTimeout(() => {
+                if (item.type === 'resource') {
+                    document.getElementById('el-name').value = item.content.name;
+                    document.getElementById('el-category').value = item.content.category;
+                    document.getElementById('el-desc').value = item.content.description;
+                }
+
+                // Set Group
+                document.getElementById('library-group-select-container').style.display = 'block';
+                populateGroupsCheckboxList(item.groups);
+            }, 0);
+        }
+
+        // --- Scene Handling ---
+        function renderScenes() {
+            const grid = document.getElementById('scene-grid');
+            grid.innerHTML = '';
+
+            scenes.forEach(scene => {
+                const card = document.createElement('div');
+                card.className = 'story-card';
+                card.onclick = () => openScene(scene.id);
+
+                card.innerHTML = `
+                    <div class="story-title">${scene.title}</div>
+                    <div class="story-excerpt">${scene.genre || 'Uncategorized'}</div>
+                    <div class="story-footer">
+                        <span>${new Date(scene.updatedAt).toLocaleDateString()}</span>
+                        <i class="fas fa-trash btn-delete" onclick="deleteScene(event, '${scene.id}')"></i>
+                    </div>
+                 `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openNewSceneModal() {
+            document.getElementById('new-scene-id').value = '';
+            document.getElementById('new-scene-title').value = '';
+            document.getElementById('new-scene-genre').value = '';
+            document.getElementById('modal-new-scene').style.display = 'flex';
+        }
+
+        async function saveNewScene() {
+            const title = document.getElementById('new-scene-title').value;
+            const genre = document.getElementById('new-scene-genre').value;
+
+            if (!title) return;
+
+            const newScene = {
+                id: 'scn_' + Date.now(),
+                title: title,
+                genre: genre,
+                content: '<p>Start writing scene...</p>',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            scenes.push(newScene);
+            await fetch('/api/storage/scenes.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: scenes })
+            });
+
+            closeModal('modal-new-scene');
+            renderScenes();
+            // openScene(newScene.id); // This function is not defined yet, commenting out for now.
+        }
+
+        function exitEditor() {
+            if (activeMode === 'scene') {
+                switchView('scenes');
+            } else {
+                switchView('stories');
+            }
+        }
+
+        function openScene(id) {
+            const scene = scenes.find(s => s.id === id);
+            if (!scene) return;
+
+            activeMode = 'scene';
+            currentSceneId = id;
+
+            document.getElementById('editor-story-title').textContent = scene.title;
+            document.getElementById('editor-content').innerHTML = scene.content || '';
+
+            // Hide Story Controls
+            document.getElementById('editor-status-select').style.display = 'none';
+            document.getElementById('chapter-select').style.display = 'none';
+            document.getElementById('btn-insert-scene').style.display = 'none';
+
+            switchView('editor');
+        }
+
+        // --- Scene Picker Logic ---
+        function openScenePicker() {
+            const list = document.getElementById('scene-picker-list');
+            list.innerHTML = '';
+
+            if (scenes.length === 0) {
+                list.innerHTML = '<div style="padding:20px; text-align:center; opacity:0.6;">No scenes created yet.</div>';
+            } else {
+                scenes.forEach(scene => {
+                    const item = document.createElement('div');
+                    item.className = 'nav-item'; // Reuse styling
+                    item.style.padding = '10px';
+                    item.style.borderBottom = '1px solid var(--border-color)';
+                    item.style.cursor = 'pointer';
+                    item.onclick = () => insertSceneContent(scene);
+
+                    item.innerHTML = `
+                        <div style="font-weight:600;">${scene.title}</div>
+                        <div style="font-size:0.8rem; opacity:0.6;">${scene.genre || 'No Genre'}</div>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+
+
+            document.getElementById('modal-scene-picker').style.display = 'flex';
+        }
+
+        function insertSceneContent(scene) {
+            if (!scene.content) return;
+
+            closeModal('modal-scene-picker');
+
+            const editorIndex = document.getElementById('editor-content');
+            editorIndex.focus();
+
+            const htmlToInsert = `<br><b>[Scene: ${scene.title}]</b><br>${scene.content}<br><b>[End Scene]</b><br>`;
+            document.execCommand('insertHTML', false, htmlToInsert);
+        }
+
+        async function deleteScene(e, id) {
+            e.stopPropagation();
+            if (!confirm("Delete this scene?")) return;
+
+            scenes = scenes.filter(s => s.id !== id);
+            await fetch('/api/storage/scenes.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: scenes })
+            });
+            renderScenes();
+        }
+
+        // --- Import Logic ---
+        function openImportModal() {
+            // Populate Items List
+            const list = document.getElementById('import-list');
+            list.innerHTML = '';
+
+            if (!library.elements || library.elements.length === 0) {
+                list.innerHTML = '<div style="padding:10px; opacity:0.6;">No items in Library.</div>';
+            } else {
+                library.elements.forEach(item => {
+                    const row = document.createElement('div');
+                    row.style.display = 'flex';
+                    row.style.alignItems = 'center';
+                    row.style.padding = '8px';
+                    row.style.borderBottom = '1px solid var(--border-color)';
+
+                    let label = 'Unknown Item';
+                    // Robust label finding
+                    if (item.type === 'resource' && item.content) {
+                        label = item.content.name || 'Untitled Resource';
+                    } else if (item.type === 'link' && item.content) {
+                        label = item.content.title || 'Untitled Link';
+                    } else if (item.type === 'note' && item.content) {
+                        label = 'Note: ' + (item.content.content || '').substring(0, 30);
+                    }
+
+                    row.innerHTML = `
+                        <label style="display:flex; align-items:center; width:100%; cursor:pointer; margin:0;">
+                            <input type="checkbox" value="${item.id}" class="import-chk" style="margin-right:10px;">
+                            <span style="flex:1;">${label}</span>
+                            <span class="lib-type-badge" style="font-size:0.65rem; opacity:0.7;">${item.type.toUpperCase()}</span>
+                        </label>
+                    `;
+                    list.appendChild(row);
+                });
+            }
+
+            // Populate Target Story Select
+            const sel = document.getElementById('import-target-story');
+            sel.innerHTML = '';
+            if (!stories || stories.length === 0) {
+                const opt = document.createElement('option');
+                opt.textContent = "No stories available";
+                sel.appendChild(opt);
+            } else {
+                stories.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.title;
+                    sel.appendChild(opt);
+                });
+            }
+
+            document.getElementById('modal-import').style.display = 'flex';
+        }
+
+        async function runImport() {
+            // Get selected IDs
+            const checkboxes = document.querySelectorAll('.import-chk:checked');
+            const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+
+            if (selectedIds.length === 0) {
+                alert("No items selected to import.");
+                return;
+            }
+
+            const targetStoryId = document.getElementById('import-target-story').value;
+            if (!targetStoryId || targetStoryId === "No stories available") {
+                alert("Please select a valid target story.");
+                return;
+            }
+
+            const story = stories.find(s => s.id === targetStoryId);
+            if (!story) {
+                alert("Story not found.");
+                return;
+            }
+
+            let importCount = 0;
+            selectedIds.forEach(libId => {
+                const libItem = library.elements.find(e => e.id === libId);
+                if (libItem) {
+                    // Determine local list type (pluralize)
+                    // map 'resource' -> 'resources', 'link' -> 'links', 'note' -> 'notes'
+                    const typeMap = { 'resource': 'resources', 'link': 'links', 'note': 'notes' };
+                    const localType = typeMap[libItem.type] || (libItem.type + 's');
+
+                    if (story.elements[localType]) {
+                        // Create copy with new ID
+                        // Deep copy content to avoid reference issues
+                        const newContent = JSON.parse(JSON.stringify(libItem.content));
+                        story.elements[localType].push({
+                            id: crypto.randomUUID(),
+                            ...newContent
+                        });
+                        importCount++;
+                    }
+                }
+            });
+
+            if (importCount > 0) {
+                await saveStoriesToDB();
+                alert(`Successfully imported ${importCount} items into "${story.title}".`);
+                closeModal('modal-import');
+                // Refresh if currently viewing that story
+                if (currentStoryId === targetStoryId) {
+                    renderElementsList();
+                }
+            } else {
+                alert("Nothing was imported.");
+            }
+        }
+
+
+        // Start
+        init();
+
+    </script>
+</body>
+
+</html>

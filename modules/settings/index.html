@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --text-color: #333;
+            --bg-color: transparent;
+            --section-bg: rgba(0, 0, 0, 0.05);
+            --border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --text-color: #e0e0e0;
+            --section-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+            color: var(--text-color);
+            background: var(--bg-color);
+            transition: color 0.3s;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .settings-section {
+            background: var(--section-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .settings-section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            font-weight: 500;
+        }
+
+        .setting-description {
+            font-size: 0.85rem;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #1a73e8;
+            /* Primary color */
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(16px);
+        }
+
+        button.action-btn {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Settings</h1>
+
+    <!-- General Section (Syncs with Dashboard Widget) -->
+    <div class="settings-section">
+        <h2>General</h2>
+        <div class="setting-row">
+            <div>
+                <div class="setting-label">Notifications Button</div>
+                <div class="setting-description">Show bell icon in header</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="check-notifications" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="setting-row">
+            <div>
+                <div class="setting-label">Quick Actions Button</div>
+                <div class="setting-description">Show bolt icon in header</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="check-quick-actions" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="setting-row">
+            <div>
+                <div class="setting-label">Themes Button</div>
+                <div class="setting-description">Show moon icon in header</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="check-themes" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h2>Appearance</h2>
+        <div class="setting-row">
+            <div>
+                <div class="setting-label">Theme</div>
+                <div class="setting-description">Choose application theme</div>
+            </div>
+            <button class="action-btn" id="choose-theme-btn">Choose Theme</button>
+        </div>
+    </div>
+
+    <script>
+        const chooseThemeBtn = document.getElementById('choose-theme-btn');
+        const toggles = {
+            notifications: document.getElementById('check-notifications'),
+            quickActions: document.getElementById('check-quick-actions'),
+            themes: document.getElementById('check-themes')
+        };
+
+        // --- Logic ---
+        window.addEventListener('message', function (event) {
+            const data = event.data;
+            if (data.type === 'theme-change') {
+                document.documentElement.setAttribute('data-theme', data.theme);
+            } else if (data.type === 'sync-state') {
+                if (data.state) {
+                    if (toggles.notifications) toggles.notifications.checked = data.state.visible_notifications;
+                    if (toggles.quickActions) toggles.quickActions.checked = data.state.visible_quick_actions;
+                    if (toggles.themes) toggles.themes.checked = data.state.visible_themes;
+                }
+            }
+        });
+
+        // Request initial state
+        if (window.parent) {
+            window.parent.postMessage({ type: 'request-state' }, '*');
+            window.parent.postMessage({ type: 'request-theme' }, '*');
+        }
+
+        // Open Theme Popup
+        chooseThemeBtn.addEventListener('click', () => {
+            if (window.parent) {
+                window.parent.postMessage({ type: 'open-theme-modal' }, '*');
+            }
+        });
+
+        // Sync Toggles
+        Object.entries(toggles).forEach(([key, element]) => {
+            if (element) {
+                element.addEventListener('change', (e) => {
+                    if (window.parent) {
+                        window.parent.postMessage({
+                            type: 'toggle-visibility',
+                            target: key,
+                            visible: e.target.checked
+                        }, '*');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
