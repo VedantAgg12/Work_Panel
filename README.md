@@ -67,5 +67,8 @@ Follow these steps to set up the project locally.
 6.  **Access the App**:
     Open [http://localhost:8001](http://localhost:8001) in your browser.
 
+## Note
+The database contains module.json for managing modules. Rest of the database files will be created automatically.
+
 ## 📝 License
 This project is for personal productivity use.

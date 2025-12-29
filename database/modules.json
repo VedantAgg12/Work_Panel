@@ -1,0 +1,12 @@
+{
+    "dashboard": true,
+    "settings": true,
+    "manager": true,
+    "tasks": true,
+    "story_studio": true,
+    "task_manager": true,
+    "notes": true,
+    "study_tracker": true,
+    "idea_vault": true,
+    "event_manager": true
+}
