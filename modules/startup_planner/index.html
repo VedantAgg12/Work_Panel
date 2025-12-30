@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Startup Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Actions -->
+        <div class="sidebar-section">
+            <div class="sidebar-title">Actions</div>
+            <button class="btn-sidebar btn-action" id="btn-add-startup">
+                <i class="fas fa-plus"></i> Add Startup
+            </button>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Navigation -->
+        <div class="sidebar-section">
+            <div class="sidebar-title">Startups</div>
+            <div id="startup-list">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content" id="main-content">
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state">
+            <i class="fas fa-rocket" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.5;"></i>
+            <h2>Select or Create a Startup</h2>
+            <p>Start planning your next big thing.</p>
+        </div>
+
+        <!-- Canvas View -->
+        <div id="canvas-view" style="display:none; height: 100%; flex-direction: column;">
+            <div class="canvas-header">
+                <div>
+                    <input type="text" id="startup-name-input" class="startup-title-input" placeholder="Startup Name">
+                    <div class="designed-by">Designed by: <span id="designer-name">-</span></div>
+                </div>
+                <div>
+                    <button class="btn-icon-text delete-btn" id="btn-delete-startup">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                    <button class="btn-icon-text" id="btn-save-canvas">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                </div>
+            </div>
+
+            <div class="lean-canvas">
+                <!-- Problem -->
+                <div class="canvas-box problem">
+                    <div class="box-header">Problem</div>
+                    <textarea data-field="problem" placeholder="Top 3 problems"></textarea>
+                </div>
+
+                <!-- Existing Alternatives (Nested in Problem or separate? Image shows it inside Problem at bottom, but grid usually separates. I'll make it a sub-section or separate box) -->
+                <!-- Based on standard layout, Existing Alternatives is often under Problem. I will make a split box or just another box if using grid -->
+                <!-- The image provided shows "Existing Alternatives" at the bottom of Problem column. I'll use flex column for that cell if possible or just one big textarea for now to simplify, or 2 textareas. let's use 2. -->
+
+                <!-- Solution -->
+                <div class="canvas-box solution">
+                    <div class="box-header">Solution</div>
+                    <textarea data-field="solution" placeholder="Top 3 features"></textarea>
+                </div>
+
+                <!-- Key Metrics -->
+                <div class="canvas-box key-metrics">
+                    <div class="box-header">Key Metrics</div>
+                    <textarea data-field="keyMetrics" placeholder="Key activities you measure"></textarea>
+                </div>
+
+                <!-- UVP -->
+                <div class="canvas-box uvp">
+                    <div class="box-header">Unique Value Proposition</div>
+                    <textarea data-field="uniqueValueProposition"
+                        placeholder="Single, clear, compelling message"></textarea>
+                </div>
+
+                <!-- High Level Concept (Bottom of UVP) -->
+
+                <!-- Unfair Advantage -->
+                <div class="canvas-box unfair-advantage">
+                    <div class="box-header">Unfair Advantage</div>
+                    <textarea data-field="unfairAdvantage" placeholder="Can't be easily copied or bought"></textarea>
+                </div>
+
+                <!-- Channels -->
+                <div class="canvas-box channels">
+                    <div class="box-header">Channels</div>
+                    <textarea data-field="channels" placeholder="Path to customers"></textarea>
+                </div>
+
+                <!-- Customer Segments -->
+                <div class="canvas-box customer-segments">
+                    <div class="box-header">Customer Segments</div>
+                    <textarea data-field="customerSegments" placeholder="Target customers"></textarea>
+                </div>
+
+                <!-- Cost Structure -->
+                <div class="canvas-box cost-structure">
+                    <div class="box-header">Cost Structure</div>
+                    <textarea data-field="costStructure"
+                        placeholder="Customer acquisition costs, Distribution costs, etc."></textarea>
+                </div>
+
+                <!-- Revenue Streams -->
+                <div class="canvas-box revenue-streams">
+                    <div class="box-header">Revenue Streams</div>
+                    <textarea data-field="revenueStreams" placeholder="Revenue model, Life time value, etc."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Startup Modal -->
+    <div class="modal" id="modal-add-startup">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Startup</h3>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-add-startup">
+                <div class="form-group">
+                    <label>Startup Name</label>
+                    <input type="text" id="inp-startup-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Designed By</label>
+                    <input type="text" id="inp-designer-name" class="form-control" value="User">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary close-modal">Cancel</button>
+                    <button type="submit" class="btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

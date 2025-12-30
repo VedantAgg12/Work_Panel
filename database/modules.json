@@ -8,5 +8,6 @@
     "notes": true,
     "study_tracker": true,
     "idea_vault": true,
-    "event_manager": true
+    "event_manager": true,
+    "startup_planner": true
 }

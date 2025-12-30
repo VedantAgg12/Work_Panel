@@ -1,0 +1,472 @@
+:root {
+    --bg-color: #f5f5f5;
+    --text-color: #333;
+    --sidebar-bg: #fff;
+    --border-color: #ddd;
+    --highlight: #e0e0e0;
+    --primary: #1a73e8;
+    --danger: #dc3545;
+}
+
+[data-theme="dark"] {
+    --bg-color: #1e1e1e;
+    --text-color: #e0e0e0;
+    --sidebar-bg: #2d2d2d;
+    --border-color: #444;
+    --highlight: #3d3d3d;
+    --primary: #8ab4f8;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+    background: var(--bg-color);
+    color: var(--text-color);
+    transition: background 0.3s, color 0.3s;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    flex-shrink: 0;
+    height: 100%;
+}
+
+.sidebar-section {
+    margin-bottom: 20px;
+}
+
+.sidebar-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.6;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+}
+
+.separator {
+    height: 1px;
+    background: var(--border-color);
+    margin: 10px 0 20px;
+}
+
+.btn-sidebar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 15px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.btn-sidebar:hover {
+    background: var(--highlight);
+}
+
+.btn-sidebar.active {
+    background: rgba(26, 115, 232, 0.1);
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.btn-action {
+    background: var(--primary);
+    color: white !important;
+    justify-content: center;
+    font-weight: 500;
+}
+
+.btn-action:hover {
+    opacity: 0.9;
+    background: var(--primary);
+}
+
+/* Content */
+.content {
+    flex: 1;
+    overflow: hidden;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+}
+
+/* Lean Canvas Grid */
+/* 
+ Layout based on attached image:
+ Row 1: Problem (0), Solution (1), UVP (2), Unfair Advantage (3), Customer Segments (4)
+ Row 2: Key Metrics (Under Solution), Channels (Under Unfair Adv) - Wait, the image shows columns.
+ 
+ Standard Lean Canvas:
+ Col 1: Problem (Top), Existing Alternatives (Bottom)
+ Col 2: Solution (Top), Key Metrics (Bottom)
+ Col 3: UVP (Full height usually, or split with High Level Concept)
+ Col 4: Unfair Advantage (Top), Channels (Bottom)
+ Col 5: Customer Segments (Top), Early Adopters (Bottom)
+ Bottom Row: Cost Structure (Left), Revenue Streams (Right)
+ 
+ Grid Template: 
+ 5 Columns, 3 Rows? 
+ Let's do a tailored grid.
+ */
+
+.lean-canvas {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: 2fr 1fr;
+    /* Top section, Bottom section (Cost/Rev) */
+    /* top section needs detailed rows too */
+    /* Let's try explicit areas */
+    /*
+     P   S   U   A   C
+     P   K   U   Ch  C
+     Cost    Rev
+    */
+    grid-template-areas:
+        "prob  sol   uvp   adv   seg"
+        "prob  met   uvp   chan  seg"
+        "cost  cost  cost  rev   rev";
+    /* Actually Cost covers left half, Rev covers right half usually */
+
+    /* Let's adjust for the image standard:
+       Cost is usually bottom 20%, Rev bottom 20%.
+       Top area is 80%.
+    */
+    gap: 0;
+    /* Border handled by cells */
+    height: 100%;
+    flex: 1;
+    background: var(--bg-color);
+}
+
+/* Better Grid Approach for variable heights */
+.lean-canvas {
+    display: grid;
+    /* 5 columns of equal width */
+    grid-template-columns: 20% 20% 20% 20% 20%;
+    /* Rows: Main Content (let's say 66%), Bottom (33%) */
+    grid-template-rows: 66% 34%;
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Nested Grids for columns that are split */
+.canvas-box {
+    background: var(--sidebar-bg);
+    /* Card bg */
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.box-header {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    opacity: 0.8;
+}
+
+.canvas-box textarea {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: inherit;
+    resize: none;
+    font-family: inherit;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    outline: none;
+}
+
+/* Specific Placements */
+.problem {
+    grid-area: 1 / 1 / 2 / 2;
+}
+
+.solution {
+    grid-area: 1 / 2 / 2 / 3;
+    display: flex;
+    flex-direction: column;
+    border-bottom: none;
+}
+
+/* Solution and Key Metrics share col 2. So we need to splitting mechanism if using explicit grid lines */
+
+/* Let's redo Grid Definition based on typical Lean Canvas cells */
+.lean-canvas {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    /* 3 rows: Top Split, Mid Split, Bottom */
+    /* 
+      Col 1: Problem (Rooms 1,2)
+      Col 2: Solution (Row 1), Key Metrics (Row 2)
+      Col 3: UVP (Rows 1,2)
+      Col 4: Unfair Adv (Row 1), Channels (Row 2)
+      Col 5: Segments (Rows 1,2)
+      Row 3: Cost (Cols 1,2, half 3?), Revenue (Cols half 3,4,5?)
+      Typically Cost is 50%, Revenue 50%.
+    */
+    grid-template-rows: 40% 40% 20%;
+}
+
+.problem {
+    grid-area: 1 / 1 / 3 / 2;
+}
+
+.solution {
+    grid-area: 1 / 2 / 2 / 3;
+}
+
+.key-metrics {
+    grid-area: 2 / 2 / 3 / 3;
+}
+
+.uvp {
+    grid-area: 1 / 3 / 3 / 4;
+}
+
+.unfair-advantage {
+    grid-area: 1 / 4 / 2 / 5;
+}
+
+.channels {
+    grid-area: 2 / 4 / 3 / 5;
+}
+
+.customer-segments {
+    grid-area: 1 / 5 / 3 / 6;
+    border-right: none;
+}
+
+.cost-structure {
+    grid-area: 3 / 1 / 4 / 3;
+    border-bottom: none;
+}
+
+/* Spin 1-3?? No, 1 to 3 is 2 cols. 1 to 3.5? Grid doesn't support .5 */
+/* We can make the grid 10 columns! */
+.lean-canvas {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: 40% 40% 20%;
+}
+
+.problem {
+    grid-area: 1 / 1 / 3 / 3;
+}
+
+.solution {
+    grid-area: 1 / 3 / 2 / 5;
+}
+
+.key-metrics {
+    grid-area: 2 / 3 / 3 / 5;
+}
+
+.uvp {
+    grid-area: 1 / 5 / 3 / 7;
+}
+
+.unfair-advantage {
+    grid-area: 1 / 7 / 2 / 9;
+}
+
+.channels {
+    grid-area: 2 / 7 / 3 / 9;
+}
+
+.customer-segments {
+    grid-area: 1 / 9 / 3 / 11;
+    border-right: none;
+}
+
+.cost-structure {
+    grid-area: 3 / 1 / 4 / 6;
+    border-bottom: none;
+}
+
+.revenue-streams {
+    grid-area: 3 / 6 / 4 / 11;
+    border-bottom: none;
+    border-right: none;
+}
+
+
+.canvas-header {
+    background: var(--bg-color);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.startup-title-input {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-color);
+    width: 300px;
+    outline: none;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.startup-title-input:focus {
+    border-color: var(--primary);
+}
+
+.designed-by {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+.btn-icon-text {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: inherit;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 5px;
+}
+
+.btn-icon-text:hover {
+    background: var(--highlight);
+}
+
+.delete-btn:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: rgba(220, 53, 69, 0.1);
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.open {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--sidebar-bg);
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    font-size: 1rem;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: inherit;
+    border-radius: 4px;
+    box-sizing: border-box;
+    /* Fix width issues */
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: inherit;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}

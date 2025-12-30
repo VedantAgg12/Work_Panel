@@ -293,3 +293,51 @@ async function saveGlobalIdea(e) {
     }
 }
 
+async function saveGlobalStartup(e) {
+    e.preventDefault();
+    const name = document.getElementById('qa-startup-name').value;
+    const designer = document.getElementById('qa-vis-designer').value || 'User';
+
+    if (!name) return;
+
+    const newStartup = {
+        id: crypto.randomUUID(),
+        name: name,
+        designedBy: designer,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+
+    try {
+        const res = await fetch('/api/storage/startup_planner.json');
+        let startups = [];
+        if (res.ok) {
+            startups = await res.json();
+            if (!Array.isArray(startups)) startups = [];
+        }
+
+        startups.push(newStartup);
+
+        await fetch('/api/storage/startup_planner.json', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: startups })
+        });
+
+        closeGlobalModal('qa-startup-modal');
+        alert("Startup Created!");
+
+        const iframe = document.getElementById('content-frame');
+        if (iframe && iframe.contentWindow) {
+            const src = iframe.getAttribute('src');
+            if (src && src.includes('startup_planner')) {
+                iframe.contentWindow.location.reload();
+            }
+        }
+
+    } catch (err) {
+        console.error("Failed to save startup", err);
+        alert("Failed to create startup");
+    }
+}
+

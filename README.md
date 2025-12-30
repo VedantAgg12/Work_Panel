@@ -20,6 +20,7 @@ Dedicated tools to supercharge your productivity.
 4.  **💡 Idea Vault**: Capture and organize your thoughts and brainstorming sessions.
 5.  **📅 Event Manager**: Keep track of upcoming events and deadlines.
 6.  **📝 Notes**: Quick sticky notes for transient thoughts.
+7.  **🚀 Startup Planner**: Plan and track startup ideas using a Lean Canvas model.
 
 ## 🛠️ Setup & Run
 

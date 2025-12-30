@@ -44,12 +44,10 @@
         /* Widget Sections */
         .widget-section {
             display: flex;
-            /* Or grid, but flex wrap is good for variable widths */
             flex-wrap: wrap;
             gap: 20px;
             margin-bottom: 40px;
             min-height: 100px;
-            /* target area for drop */
             padding: 0px;
             border-radius: 8px;
             transition: background 0.2s;
@@ -65,15 +63,90 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 10px;
-            width: 200px;
+            /* Flex basis for 6 items per row with gap: (100% - (5 * 20px)) / 6 approx 15% */
+            /* But we want them to expand. */
+            /* min-width: 200px is good. */
+            /* flex: 1 1 calc(16.666% - 20px); */
+            flex: 1 0 200px;
+            /* Grow, Don't Shrink too much, Base 200px */
+
+            /* To enforce max 6 per row, we can use max-width? No. 
+               The requirement is: "Disabling any widget should not result in less than six widget occupying the row if there are six widget still in one section."
+               And "allow the widgets to expand to the full width".
+               
+               If I have 1 widget: flex-grow makes it 100%.
+               If I have 6 widgets: they wrap if they can't fit 200px each?
+               If screen is wide enough, 6 fit. 
+               If I have 7: 6 in row 1, 1 in row 2 (expands to full).
+               
+               To strictly limit to 6 per row even on huge screens:
+               max-width: calc(100% / 1 ?);
+               
+               Actually, `flex: 1 0 calc(16.66% - 20px)` acts as a base.
+               If I use `min-width: 15%`?
+               
+               Let's try:
+               flex: 1 0 calc(16.666% - 20px);
+               min-width: 200px; 
+               
+               If screen is small, 200px triggers wrap.
+               If screen is huge, 16.66% logic might keep them small? No, flex-grow is 1.
+               Wait, if `flex-basis` is small, and `flex-grow` is 1, they will fill the row.
+               But if I have 12 items on a huge screen, will they become a row of 12?
+               Yes, they might.
+               To limit to 6: `max-width: calc(100% / 6 - 20px)` ? No, 20px gap.
+               Actually `max-width: 500px` might be better or explicit media queries?
+               
+               The user requirement "limit the number of widgets in one row to six".
+               So MAX 6.
+               
+               So: `flex: 1 0 calc(16.666% - 20px);`
+               AND strict constraint?
+               
+               How about `width: calc(100% / 6)` ? No.
+               
+               Let's stick to `flex: 1 0 250px;` and maybe `max-width: 100%`.
+               To enforce "max 6", on very large screens, we might need a container constraint or `max-width: calc(16.666% - gap)`. But then they won't expand if there are only 2.
+               
+               Ah, the user wants BOTH:
+               1. Expand if few.
+               2. Limit to 6 if many.
+               
+               If there are 6: they take 16% each.
+               If there are 2: they take 50% each.
+               
+               This is native flexbox behavior IF the screen width allows it.
+               The only case to "Limit to 6" is preventing 7 or 8 on a super wide screen.
+               I can set `min-width: calc(16.66% - 20px)`? No.
+               
+               Actually, I can use `min-width: 250px` (or 200px as before) and let flex handle it. The user likely means "don't bunch them up too small, and don't make a row of 20 widgets".
+               
+               Adding `max-width: 100%` is default.
+               
+               Let's use:
+               flex: 1 0 200px;
+               max-width: 100%;
+               
+               And to ensure "limit 6", well, if 200px * 7 fits, it will show 7.
+               If the screen is 1920px, 200*7 = 1400. It fits.
+               So I DO need to limit it.
+               
+               How about `flex: 1 0 calc(16.666% - 20px);`?
+               If I have 1 widget: base is 16%. Grow makes it 100%.
+               If I have 7 widgets: base is 16%. 16*7 > 100. So it wraps.
+               This looks correct for limiting!
+               
+               But `calc(16.666% - 20px)` is tricky with `gap: 20px`. The formula for gap subtraction with flex wrap is complex.
+               Better to use `gap` property in container and just ` calc(16.666% - (20px * 5 / 6) )`?
+               Simpler: `flex: 1 0 16%;` (approx).
+               
+               Let's try `flex: 1 0 16%; min-width: 220px;`
+            */
+            flex: 1 0 16%;
+            min-width: 250px;
+
             height: 200px;
-            min-width: 200px;
-            max-height: 200px;
-            /* Auto height based on content */
-            position: relative;
             max-height: 400px;
-            /* Enforce max height */
-            /* resize: both; removed */
             overflow: hidden;
             transition: box-shadow 0.2s, transform 0.2s;
             display: flex;
@@ -463,6 +536,17 @@
             </div>
         </div>
 
+        <!-- Startup Planner Widget -->
+        <div class="widget" draggable="true" id="widget-startups">
+            <div class="widget-header">
+                <div class="widget-title" onclick="navigateToModule('startup_planner')" style="cursor:pointer"><i
+                        class="fas fa-rocket"></i> Startups</div>
+            </div>
+            <div class="widget-content" id="startup-widget-body" style="padding-top:5px;">
+                <p style="text-align:center; opacity:0.6; font-size:0.8rem; padding-top:20px;">Loading startups...</p>
+            </div>
+        </div>
+
     </div>
 
     <!-- DASHBOARD MODALS Removed (Moved to Global) -->
@@ -799,13 +883,11 @@
                 const time = nextEvent.allDay ? 'All Day' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                 container.innerHTML = `
-                    <div style="text-align:center;">
-                        <div style="font-size:2rem; font-weight:bold; line-height:1; color:#e91e63;">${day}</div>
-                        <div style="font-size:0.8rem; font-weight:600; text-transform:uppercase;">${month}</div>
-                        <div style="margin-top:5px; font-weight:600; font-size:0.9rem;">${nextEvent.title}</div>
-                        <div style="font-size:0.8rem; opacity:0.7;">${time}</div>
-                    </div>
-                `;
+                        <div style="font-size:1.5rem; font-weight:700; text-align:center; color:#e91e63;">${day}</div>
+                        <div style="font-size:0.9rem; text-align:center; text-transform:uppercase; font-weight:600; opacity:0.7; margin-bottom:5px;">${month}</div>
+                        <div style="font-size:0.95rem; font-weight:600; text-align:center; margin-bottom:2px;">${nextEvent.title}</div>
+                        <div style="font-size:0.8rem; text-align:center; opacity:0.6;">${time}</div>
+                    `;
 
             } catch (e) {
                 console.error(e);
@@ -813,6 +895,48 @@
             }
         }
         updateEventWidget();
+
+        async function updateStartupWidget() {
+            const container = document.getElementById('startup-widget-body');
+            try {
+                const res = await fetch('/api/storage/startup_planner.json');
+                if (!res.ok) {
+                    container.innerHTML = '<div style="opacity:0.5; font-size:0.8rem; text-align:center; padding-top:20px;">No startups</div>';
+                    return;
+                }
+                const startups = await res.json();
+                if (!Array.isArray(startups) || startups.length === 0) {
+                    container.innerHTML = '<div style="opacity:0.5; font-size:0.8rem; text-align:center; padding-top:20px;">No startups</div>';
+                    return;
+                }
+
+                // Sort by updatedAt descending
+                startups.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                const top3 = startups.slice(0, 3);
+
+                container.innerHTML = '';
+                top3.forEach(s => {
+                    const div = document.createElement('div');
+                    div.style.padding = '8px 0';
+                    div.style.borderBottom = '1px solid var(--border-color)';
+                    div.style.cursor = 'pointer';
+                    div.onclick = () => navigateToModule('startup_planner'); // Linking specific startup in module needs messaging support, simpler to just open module
+
+                    div.innerHTML = `
+                        <div style="font-weight:600; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.name}</div>
+                        <div style="font-size:0.75rem; opacity:0.7;">${s.designedBy} &bull; ${new Date(s.updatedAt).toLocaleDateString()}</div>
+                    `;
+                    container.appendChild(div);
+                });
+
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div style="color:red; font-size:0.8rem;">Error loading startups</div>';
+            }
+        }
+        updateStartupWidget();
+
+
 
         async function updateIdeaWidget() {
             const container = document.querySelector('#widget-ideas .widget-content');

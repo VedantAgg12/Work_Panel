@@ -261,6 +261,16 @@
                         <i class="fas fa-lightbulb"></i> Quick Idea
                     </button>
                 </div>
+
+                <div id="qa-group-startup" style="display:none">
+                    <div class="nav-section-title"
+                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
+                        Startup Planner</div>
+                    <button class="quick-action-btn" id="qa-new-startup" type="button"
+                        onclick="openGlobalModal('qa-startup-modal')">
+                        <i class="fas fa-rocket"></i> New Startup
+                    </button>
+                </div>
             </div>
         </aside>
 
@@ -744,6 +754,32 @@
             </div>
         </div>
 
+        <!-- NEW STARTUP MODAL (Global) -->
+        <div id="qa-startup-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>New Startup</h3>
+                    <button class="icon-button" onclick="closeGlobalModal('qa-startup-modal')"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form id="qa-startup-form" onsubmit="saveGlobalStartup(event)">
+                    <div class="form-group">
+                        <label>Startup Name</label>
+                        <input type="text" id="qa-startup-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Designed By</label>
+                        <input type="text" id="qa-vis-designer" class="form-control" value="User">
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                        <button type="button" class="btn-modal btn-outline"
+                            onclick="closeGlobalModal('qa-startup-modal')">Cancel</button>
+                        <button type="submit" class="btn-modal btn-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
 
         <!-- Main Content -->
         <main class="main-content">
@@ -783,6 +819,11 @@
             const ideaEnabled = ideaLink && ideaLink.parentElement.style.display !== 'none';
             const groupIdea = document.getElementById('qa-group-idea');
             if (groupIdea) groupIdea.style.display = ideaEnabled ? 'block' : 'none';
+
+            const runLink = document.querySelector('a[data-module="startup_planner"]');
+            const runEnabled = runLink && runLink.parentElement.style.display !== 'none';
+            const groupStartup = document.getElementById('qa-group-startup');
+            if (groupStartup) groupStartup.style.display = runEnabled ? 'block' : 'none';
         }
 
         // Listeners
