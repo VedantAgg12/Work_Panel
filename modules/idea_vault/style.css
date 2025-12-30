@@ -235,191 +235,22 @@ body {
     background: rgba(255, 255, 255, 0.05);
 }
 
-/* Mind Map View */
+/* Mind Map View (Graph) */
 .mind-map-container {
-    padding: 40px;
-    min-height: 100%;
-}
-
-.tree-node {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    margin: 0 10px;
-    z-index: 1;
-}
-
-.node-content {
-    background: var(--card-bg);
-    border: 2px solid var(--border-color);
-    padding: 10px 25px;
-    /* More padding */
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    position: relative;
-    cursor: default;
-    min-width: 100px;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: box-shadow 0.2s, border-color 0.2s;
-    user-select: none;
-    color: var(--text-color);
-    z-index: 2;
-    /* Content above lines */
-}
-
-.node-content:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    border-color: #1a73e8;
-}
-
-/* Fix for actions: Move them OUT of the node so they don't overlap text, 
-   but keep them hoverable. "Making them move out of the idea node" */
-.node-actions {
     position: absolute;
-    /* Move to the right side, outside the bubble */
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-left: 10px;
-    /* Gap */
-
-    display: flex;
-    flex-direction: row;
-    /* Horizontal */
-    gap: 5px;
-
-    opacity: 0;
-    transition: opacity 0.2s;
-    pointer-events: none;
-
-    /* Increase hover area so mouse doesn't reject */
-    padding-left: 10px;
-    margin-left: 0;
-}
-
-.node-content:hover .node-actions,
-.node-actions:hover {
-    /* Keep visible when hovering the actions themselves */
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.node-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: none;
-    background: var(--card-bg);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    color: var(--text-color);
-    transition: transform 0.2s;
-}
-
-.node-btn:hover {
-    transform: scale(1.1);
-    background: #1a73e8;
-    color: white;
-}
-
-.node-children {
-    display: flex;
-    justify-content: center;
-    margin-top: 40px;
-    position: relative;
-    gap: 20px;
-}
-
-/* Connectors */
-.node-children::before {
-    content: '';
-    position: absolute;
-    top: -20px;
-    left: 50%;
-    width: 2px;
-    height: 20px;
-    background: var(--border-color);
-}
-
-.tree-node::before {
-    content: '';
-    position: absolute;
-    top: -20px;
-    left: 50%;
-    width: 2px;
-    height: 20px;
-    background: var(--border-color);
-    z-index: -1;
-}
-
-/* Hide line for root */
-.root-node>.tree-node::before {
-    display: none;
-}
-
-/* Horizontal line for children */
-.node-children>.tree-node:first-child::after {
-    content: '';
-    position: absolute;
-    top: -20px;
-    right: 50%;
-    width: 50%;
-    /* Go to right half */
-    height: 2px;
-    background: var(--border-color);
-    left: auto;
-    /* Reset */
-}
-
-.node-children>.tree-node:last-child::after {
-    content: '';
-    position: absolute;
-    top: -20px;
-    left: 50%;
-    width: 50%;
-    height: 2px;
-    background: var(--border-color);
-}
-
-/* If only one child, no horizontal line needed actually, but logic holds */
-.node-children>.tree-node:only-child::after {
-    display: none;
-}
-
-/* Middle nodes need full line? No, css pseudo logic for trees is tricky. 
-   Simplified: We need a horizontal bar across all children tops, except extending past the first/last centers.
-*/
-/* Better CSS Tree Lines Logic */
-.node-children>.tree-node::after {
-    content: '';
-    position: absolute;
-    top: -20px;
+    top: 0;
     left: 0;
     width: 100%;
-    height: 2px;
-    background: var(--border-color);
-    z-index: -1;
+    height: 100%;
+    background: var(--bg-color);
+    z-index: 10;
+    overflow: hidden;
+    /* Clean slate */
+    display: block;
+    padding: 0;
 }
 
-.node-children>.tree-node:first-child::after {
-    left: 50%;
-    width: 50%;
-}
 
-.node-children>.tree-node:last-child::after {
-    width: 50%;
-}
-
-.node-children>.tree-node:only-child::after {
-    display: none;
-}
 
 
 /* Modals (Local) */

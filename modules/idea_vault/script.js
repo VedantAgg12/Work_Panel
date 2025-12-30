@@ -91,6 +91,16 @@ async function loadData() {
             const data = await res.json();
             ideas = data.ideas || [];
             collections = data.collections || [];
+
+            // Migration: upIdeaId -> parentIds
+            ideas.forEach(i => {
+                if (!i.parentIds) i.parentIds = [];
+                if (i.upIdeaId) {
+                    if (!i.parentIds.includes(i.upIdeaId)) i.parentIds.push(i.upIdeaId);
+                    delete i.upIdeaId; // Cleanup
+                }
+            });
+
         } else {
             ideas = [];
             collections = [];
@@ -101,6 +111,39 @@ async function loadData() {
     } catch (e) {
         console.error("Failed to load data", e);
     }
+}
+
+function renderConnectNodesList(currentIdeaId, selectedParentIds = []) {
+    const container = document.getElementById('div-connect-nodes-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const sorted = [...ideas].sort((a, b) => a.title.localeCompare(b.title));
+
+    if (sorted.length === 0) {
+        container.innerHTML = '<div style="opacity:0.6; font-size:0.8rem;">No other ideas available.</div>';
+        return;
+    }
+
+    sorted.forEach(idea => {
+        // Cannot be parent of self
+        if (currentIdeaId && idea.id === currentIdeaId) return;
+
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.marginBottom = '4px';
+
+        const isChecked = selectedParentIds.includes(idea.id) ? 'checked' : '';
+
+        row.innerHTML = `
+            <label style="display:flex; align-items:center; width:100%; cursor:pointer;">
+                <input type="checkbox" class="chk-connect-node" value="${idea.id}" ${isChecked} style="margin-right:8px;">
+                <span style="font-size:0.9rem;">${idea.title}</span>
+            </label>
+        `;
+        container.appendChild(row);
+    });
 }
 
 function render() {
@@ -340,80 +383,114 @@ function renderListView(container) {
 function renderMindMap(container) {
     const mapContainer = document.createElement('div');
     mapContainer.className = 'mind-map-container';
+    mapContainer.id = 'vis-network-container';
+    container.appendChild(mapContainer);
 
-    let roots = [];
-    if (selectedRootId === 'all') {
-        // Show only actual roots (no parents)
-        roots = ideas.filter(i => !i.upIdeaId);
-    } else {
-        // Show selected node as root
-        roots = ideas.filter(i => i.id === selectedRootId);
-    }
+    // Prepare Data for Vis.js
+    const nodes = new vis.DataSet();
+    const edges = new vis.DataSet();
 
-    if (roots.length === 0) {
-        mapContainer.innerHTML = '<div style="opacity:0.5; text-align:center;">No idea trees found.</div>';
-    }
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const nodeColor = isDark ? '#2d2d2d' : '#ffffff';
+    const textColor = isDark ? '#e0e0e0' : '#333333';
+    const borderColor = isDark ? '#444' : '#ddd';
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'root-node';
-    wrapper.style.display = 'flex';
-    wrapper.style.justifyContent = 'center';
-    wrapper.style.gap = '40px';
+    ideas.forEach(idea => {
+        // Node
+        nodes.add({
+            id: idea.id,
+            label: idea.title,
+            shape: 'box',
+            color: {
+                background: nodeColor,
+                border: borderColor,
+                highlight: { background: isDark ? '#3d3d3d' : '#f0f0f0', border: '#1a73e8' }
+            },
+            font: { color: textColor, size: 20 }, // Increased size
+            margin: 15, // Larger box
+            shadow: true
+        });
 
-    roots.forEach(root => {
-        wrapper.appendChild(createTreeNode(root));
+        // Edges
+        if (idea.parentIds && idea.parentIds.length > 0) {
+            idea.parentIds.forEach(pid => {
+                // Ensure parent exists
+                if (ideas.find(i => i.id === pid)) {
+                    edges.add({
+                        from: pid,
+                        to: idea.id,
+                        arrows: 'to',
+                        color: { color: isDark ? '#666' : '#ccc' }
+                    });
+                }
+            });
+        }
     });
 
-    mapContainer.appendChild(wrapper);
-    container.appendChild(mapContainer);
-}
-
-function createTreeNode(idea) {
-    const node = document.createElement('div');
-    node.className = 'tree-node';
-
-    const content = document.createElement('div');
-    content.className = 'node-content';
-    content.innerHTML = `
-        <div>${idea.title}</div>
-    `;
-    content.onclick = (e) => { // Click to edit
-        e.stopPropagation();
-        openEditModal(idea);
+    // Options
+    const options = {
+        layout: {
+            hierarchical: false
+        },
+        physics: {
+            enabled: true,
+            stabilization: {
+                iterations: 1000, // Pre-stabilize heavily
+                updateInterval: 50,
+                onlyDynamicEdges: false,
+                fit: true
+            },
+            barnesHut: {
+                gravitationalConstant: -3000,
+                centralGravity: 0.3,
+                springLength: 120, // More space
+                springConstant: 0.04,
+                damping: 0.09,
+                avoidOverlap: 0.5 // Avoid overlap
+            }
+        },
+        interaction: {
+            hover: true,
+            tooltipDelay: 200,
+            zoomView: true,
+            dragView: true
+        }
     };
 
-    const actions = document.createElement('div');
-    actions.className = 'node-actions';
+    // Initialize Network
+    const network = new vis.Network(mapContainer, { nodes, edges }, options);
 
-    const btnAdd = document.createElement('button');
-    btnAdd.className = 'node-btn';
-    btnAdd.innerHTML = '<i class="fas fa-plus"></i>';
-    btnAdd.title = "Add Sub-idea";
-    btnAdd.onclick = (e) => {
-        e.stopPropagation();
-        openSubIdeaModal(idea.id);
-    };
+    // Freeze after stabilization (Keep it static)
+    network.on("stabilizationIterationsDone", function () {
+        network.setOptions({ physics: false });
+    });
 
-    // REMOVED DELETE BUTTON FROM HERE
+    // Fallback if stabilization stops early
+    network.on("stabilized", function () {
+        network.setOptions({ physics: false });
+    });
 
-    actions.appendChild(btnAdd);
-    content.appendChild(actions);
+    // Event: Double Click to Edit
+    network.on("doubleClick", function (params) {
+        if (params.nodes.length > 0) {
+            const nodeId = params.nodes[0];
+            const idea = ideas.find(i => i.id === nodeId);
+            if (idea) {
+                openEditModal(idea);
+            }
+        }
+    });
 
-    node.appendChild(content);
+    // Hover Text Effect
+    network.on("hoverNode", function (params) {
+        nodes.update({ id: params.node, font: { color: '#000000' } });
+    });
 
-    // Find children
-    const children = ideas.filter(i => i.upIdeaId === idea.id);
-    if (children.length > 0) {
-        const childrenContainer = document.createElement('div');
-        childrenContainer.className = 'node-children';
-        children.forEach(child => {
-            childrenContainer.appendChild(createTreeNode(child));
-        });
-        node.appendChild(childrenContainer);
-    }
-
-    return node;
+    network.on("blurNode", function (params) {
+        nodes.update({ id: params.node, font: { color: textColor } });
+    });
 }
+// createTreeNode is removed as it is no longer used.
 
 // --- Actions ---
 
@@ -429,6 +506,9 @@ function openModal(id) {
 
         // Hide delete, show save
         document.getElementById('btn-delete-idea').style.display = 'none';
+
+        // Populate connect list
+        renderConnectNodesList(null, []);
 
     } else if (id === 'modal-collection') {
         document.getElementById('form-collection').reset();
@@ -449,9 +529,11 @@ function openEditModal(idea) {
     document.getElementById('inp-idea-collection').value = idea.collectionId || "";
     document.getElementById('inp-idea-desc').value = idea.description || "";
 
+    // Populate Connect List
+    renderConnectNodesList(idea.id, idea.parentIds || []);
+
     // Set Editing ID
     document.getElementById('inp-editing-id').value = idea.id;
-    document.getElementById('inp-parent-id').value = idea.upIdeaId || ''; // Keep parent if exists
 
     // Update Modal Title
     document.querySelector('#modal-idea h3').textContent = 'Edit Idea';
@@ -462,7 +544,7 @@ function openEditModal(idea) {
 
 function openSubIdeaModal(parentId) {
     openModal('modal-idea');
-    document.getElementById('inp-parent-id').value = parentId;
+    renderConnectNodesList(null, [parentId]);
 }
 
 async function saveIdea(e) {
@@ -472,7 +554,11 @@ async function saveIdea(e) {
     const priority = document.getElementById('inp-idea-priority').value;
     const collectionId = document.getElementById('inp-idea-collection').value;
     const description = document.getElementById('inp-idea-desc').value;
-    const parentId = document.getElementById('inp-parent-id').value;
+
+    // Get parent IDs from checkboxes
+    const checkboxes = document.querySelectorAll('.chk-connect-node:checked');
+    const parentIds = Array.from(checkboxes).map(cb => cb.value);
+
     const editingId = document.getElementById('inp-editing-id').value; // Check if editing
 
     if (editingId) {
@@ -486,7 +572,7 @@ async function saveIdea(e) {
                 priority: priority,
                 collectionId: collectionId || null,
                 description: description || "",
-                // don't change created, upIdeaId (unless re-parenting implemented), downIdeaIds
+                parentIds: parentIds
             };
         }
     } else {
@@ -499,7 +585,7 @@ async function saveIdea(e) {
             collectionId: collectionId || null,
             description: description || "",
             created: new Date().toISOString(),
-            upIdeaId: parentId || null,
+            parentIds: parentIds,
             downIdeaIds: []
         };
         ideas.push(newIdea);
@@ -518,17 +604,18 @@ async function saveIdea(e) {
 
 
 async function deleteIdea(id) {
-    // Simple recursive delete
-    const toDelete = [id];
-    let idx = 0;
-    while (idx < toDelete.length) {
-        const current = toDelete[idx];
-        const children = ideas.filter(i => i.upIdeaId === current);
-        children.forEach(c => toDelete.push(c.id));
-        idx++;
-    }
+    if (!confirm("Delete this idea?")) return;
 
-    ideas = ideas.filter(i => !toDelete.includes(i.id));
+    // Remove idea
+    ideas = ideas.filter(i => i.id !== id);
+
+    // Remove references in other ideas
+    ideas.forEach(i => {
+        if (i.parentIds && i.parentIds.includes(id)) {
+            i.parentIds = i.parentIds.filter(pid => pid !== id);
+        }
+    });
+
     await saveData();
     populateRootSelect();
     render();
@@ -597,5 +684,34 @@ function populateRootSelect() {
         sel.value = current;
     } else {
         sel.value = 'all';
+    }
+}
+
+function populateParentSelect(currentIdeaId, selectedParentId) {
+    const sel = document.getElementById('inp-idea-parent');
+    if (!sel) return;
+
+    sel.innerHTML = '<option value="">(None - Root)</option>';
+
+    // Flatten logic or simple list? Simple list is fine, but we must avoid circular dependency (self as parent).
+    // Also excluding descendants would be ideal but simple self-exclusion is MVP.
+    // Actually, simple self-exclusion allows creating cycles if I pick a child. 
+    // Cycle check is complex. Let's just exclude self for now.
+
+    // Sort logic? Alphabetical
+    const sorted = [...ideas].sort((a, b) => a.title.localeCompare(b.title));
+
+    sorted.forEach(idea => {
+        // Cannot be parent of self
+        if (currentIdeaId && idea.id === currentIdeaId) return;
+
+        const opt = document.createElement('option');
+        opt.value = idea.id;
+        opt.textContent = idea.title;
+        sel.appendChild(opt);
+    });
+
+    if (selectedParentId) {
+        sel.value = selectedParentId;
     }
 }
