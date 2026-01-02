@@ -104,6 +104,8 @@ body {
     margin-bottom: 20px;
     display: flex;
     justify-content: flex-end;
+    position: relative;
+    z-index: 20;
 }
 
 .control-select {

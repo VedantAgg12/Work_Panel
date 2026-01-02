@@ -80,8 +80,11 @@ function updateControlsVisibility() {
     const filterContainer = document.getElementById('grid-controls');
     const mapControls = document.getElementById('map-controls');
 
-    if (filterContainer) filterContainer.style.display = currentView === 'grid' ? 'block' : 'none';
-    if (mapControls) mapControls.style.display = currentView === 'mindmap' ? 'block' : 'none';
+    // Show collection filter for both Grid and Mind Map
+    if (filterContainer) filterContainer.style.display = (currentView === 'grid' || currentView === 'mindmap') ? 'block' : 'none';
+
+    // Hide old map controls (Tree Root Selector)
+    if (mapControls) mapControls.style.display = 'none';
 }
 
 async function loadData() {
@@ -306,7 +309,11 @@ function renderGridView(container) {
     let sorted = [...ideas].sort((a, b) => new Date(b.created) - new Date(a.created));
 
     if (filterVal !== 'all') {
-        sorted = sorted.filter(i => i.collectionId === filterVal);
+        if (filterVal === 'unassigned') {
+            sorted = sorted.filter(i => !i.collectionId);
+        } else {
+            sorted = sorted.filter(i => i.collectionId === filterVal);
+        }
     }
 
     sorted.forEach(idea => {
@@ -395,7 +402,24 @@ function renderMindMap(container) {
     const textColor = isDark ? '#e0e0e0' : '#333333';
     const borderColor = isDark ? '#444' : '#ddd';
 
-    ideas.forEach(idea => {
+    // Filter Items based on Collection Select
+    const filterEl = document.getElementById('filter-collection');
+    const filterVal = filterEl ? filterEl.value : 'all';
+
+    console.log("[MindMap] Filtering by:", filterVal);
+
+    let filteredIdeas = ideas;
+    if (filterVal !== 'all') {
+        if (filterVal === 'unassigned') {
+            filteredIdeas = ideas.filter(i => !i.collectionId);
+        } else {
+            // Use loose comparison or string conversion to handle potential type mismatches (legacy IDs)
+            filteredIdeas = ideas.filter(i => String(i.collectionId) === String(filterVal));
+        }
+    }
+    console.log("[MindMap] Filtered ideas count:", filteredIdeas.length);
+
+    filteredIdeas.forEach(idea => {
         // Node
         nodes.add({
             id: idea.id,
@@ -412,10 +436,13 @@ function renderMindMap(container) {
         });
 
         // Edges
+        // Only add edges if both nodes are in the view
         if (idea.parentIds && idea.parentIds.length > 0) {
             idea.parentIds.forEach(pid => {
-                // Ensure parent exists
-                if (ideas.find(i => i.id === pid)) {
+                // Ensure parent exists AND is in the filtered list
+                // (Requirement: "If there is a connection between any ideas obtained as a result of filter, I would like them to be connected.")
+                const parentInView = filteredIdeas.find(i => i.id === pid);
+                if (parentInView) {
                     edges.add({
                         from: pid,
                         to: idea.id,
@@ -604,7 +631,7 @@ async function saveIdea(e) {
 
 
 async function deleteIdea(id) {
-    if (!confirm("Delete this idea?")) return;
+    // Confirmation handled by caller (UI)
 
     // Remove idea
     ideas = ideas.filter(i => i.id !== id);
@@ -651,7 +678,7 @@ function populateCollectionSelects() {
     const filterSel = document.getElementById('filter-collection');
     if (filterSel) {
         const current = filterSel.value;
-        filterSel.innerHTML = '<option value="all">All Collections</option>';
+        filterSel.innerHTML = '<option value="all">All Collections</option><option value="unassigned">No Collection</option>';
         collections.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
