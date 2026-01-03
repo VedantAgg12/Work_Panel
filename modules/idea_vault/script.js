@@ -74,6 +74,20 @@ function setupEventListeners() {
             document.getElementById('modal-idea').classList.remove('active');
         }
     });
+
+    // Search Filter for Connect Nodes
+    document.getElementById('inp-connect-search').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const container = document.getElementById('div-connect-nodes-list');
+        const items = container.querySelectorAll('div'); // The rows
+        items.forEach(div => {
+            const span = div.querySelector('span');
+            if (span) {
+                const text = span.textContent.toLowerCase();
+                div.style.display = text.includes(term) ? 'flex' : 'none';
+            }
+        });
+    });
 }
 
 function updateControlsVisibility() {
@@ -536,6 +550,7 @@ function openModal(id) {
 
         // Populate connect list
         renderConnectNodesList(null, []);
+        document.getElementById('inp-connect-search').value = '';
 
     } else if (id === 'modal-collection') {
         document.getElementById('form-collection').reset();
