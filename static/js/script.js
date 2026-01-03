@@ -1,13 +1,11 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const navToggle = document.getElementById('nav-toggle');
-    const quickToggle = document.getElementById('quick-action-toggle');
     const notificationToggle = document.getElementById('notification-toggle');
     const themeToggle = document.getElementById('theme-toggle');
 
     // UI Elements
     const navDrawer = document.getElementById('nav-drawer');
-    const quickDrawer = document.getElementById('quick-drawer');
     const notificationPopup = document.getElementById('notification-popup');
     const overlay = document.getElementById('drawer-overlay');
     const closeButtons = document.querySelectorAll('.close-drawer');
@@ -15,10 +13,10 @@
     const contentFrame = document.getElementById('content-frame');
 
     // Central State
+    let currentModule = 'dashboard';
     const appState = {
         theme: localStorage.getItem('theme') || 'dark',
         visible_notifications: localStorage.getItem('visible_notifications') !== 'false', // Default true
-        visible_quick_actions: localStorage.getItem('visible_quick_actions') !== 'false', // Default true
         visible_themes: localStorage.getItem('visible_themes') !== 'false' // Default true
     };
 
@@ -77,12 +75,14 @@
     // --- State Management ---
     function updateHeaderVisibility() {
         if (notificationToggle) notificationToggle.style.display = appState.visible_notifications ? 'flex' : 'none';
-        if (quickToggle) quickToggle.style.display = appState.visible_quick_actions ? 'flex' : 'none';
+
+
+
         if (themeToggle) themeToggle.style.display = appState.visible_themes ? 'flex' : 'none';
 
         // Save to local storage
         localStorage.setItem('visible_notifications', appState.visible_notifications);
-        localStorage.setItem('visible_quick_actions', appState.visible_quick_actions);
+
         localStorage.setItem('visible_themes', appState.visible_themes);
     }
 
@@ -115,7 +115,7 @@
         } else if (data.type === 'toggle-visibility') {
             // Update State
             if (data.target === 'notifications') appState.visible_notifications = data.visible;
-            if (data.target === 'quickActions') appState.visible_quick_actions = data.visible;
+
             if (data.target === 'themes') appState.visible_themes = data.visible;
 
             // Update UI
@@ -158,14 +158,14 @@
 
     function closeAllDrawers(removeOverlay = true) {
         navDrawer.classList.remove('open');
-        quickDrawer.classList.remove('open');
+
         if (removeOverlay) {
             overlay.classList.remove('active');
         }
     }
 
     if (navToggle) navToggle.addEventListener('click', () => openDrawer(navDrawer));
-    if (quickToggle) quickToggle.addEventListener('click', () => openDrawer(quickDrawer));
+
     overlay.addEventListener('click', () => closeAllDrawers());
 
     closeButtons.forEach(btn => {
@@ -185,6 +185,9 @@
     });
 
     function loadModule(moduleName) {
+        currentModule = moduleName;
+        updateHeaderVisibility();
+
         if (moduleName === 'dashboard') {
             contentFrame.src = '/modules/dashboard/index.html';
         } else {

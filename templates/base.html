@@ -131,9 +131,7 @@
                 <button id="notification-toggle" class="icon-button" aria-label="Notifications">
                     <i class="fas fa-bell"></i>
                 </button>
-                <button id="quick-action-toggle" class="icon-button" aria-label="Quick Actions">
-                    <i class="fas fa-bolt"></i>
-                </button>
+
                 <button id="theme-toggle" class="icon-button" aria-label="Toggle Theme">
                     <i class="fas fa-moon"></i>
                 </button>
@@ -194,85 +192,7 @@
             </ul>
         </nav>
 
-        <!-- Quick Actions Drawer (Left) -->
-        <aside id="quick-drawer" class="drawer drawer-left-secondary">
-            <div class="drawer-header">
-                <h3>Quick Actions</h3>
-                <button class="close-drawer"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="drawer-content">
-                <div id="qa-group-task" style="display:none">
-                    <div class="nav-section-title"
-                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
-                        Task Manager</div>
-                    <button class="quick-action-btn" id="qa-new-task" type="button">
-                        <i class="fas fa-plus"></i> New Task
-                    </button>
-                </div>
 
-                <div id="qa-group-story" style="display:none">
-                    <div class="nav-section-title"
-                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
-                        Story Studio</div>
-                    <button class="quick-action-btn" id="qa-new-story" type="button">
-                        <i class="fas fa-book"></i> New Story
-                    </button>
-                    <button class="quick-action-btn" id="qa-new-scene" type="button">
-                        <i class="fas fa-film"></i> New Scene
-                    </button>
-                    <button class="quick-action-btn" id="qa-new-element" type="button">
-                        <i class="fas fa-cube"></i> New Element
-                    </button>
-                </div>
-
-                <div id="qa-group-notes" style="display:none">
-                    <div class="nav-section-title"
-                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
-                        Notes</div>
-                    <button class="quick-action-btn" id="qa-new-note" type="button">
-                        <i class="fas fa-plus"></i> New Note
-                    </button>
-                    <button class="quick-action-btn" id="qa-new-folder" type="button">
-                        <i class="fas fa-folder-plus"></i> New Folder
-                    </button>
-                </div>
-
-                <div id="qa-group-study" style="display:none">
-                    <div class="nav-section-title"
-                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
-                        Study Tracker</div>
-                    <!-- Add Subject Removed -->
-                    <button class="quick-action-btn" id="qa-new-schedule" type="button">
-                        <i class="fas fa-calendar-plus"></i> Add Schedule
-                    </button>
-                    <button class="quick-action-btn" id="qa-new-goal" type="button">
-                        <i class="fas fa-bullseye"></i> Add Goal
-                    </button>
-                    <button class="quick-action-btn" id="qa-new-event" type="button">
-                        <i class="fas fa-calendar-check"></i> Add Event
-                    </button>
-                </div>
-
-                <div id="qa-group-idea" style="display:none">
-                    <div class="nav-section-title"
-                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
-                        Idea Vault</div>
-                    <button class="quick-action-btn" id="qa-new-idea" type="button">
-                        <i class="fas fa-lightbulb"></i> Quick Idea
-                    </button>
-                </div>
-
-                <div id="qa-group-startup" style="display:none">
-                    <div class="nav-section-title"
-                        style="padding: 10px 15px 5px; font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; font-weight: 600;">
-                        Startup Planner</div>
-                    <button class="quick-action-btn" id="qa-new-startup" type="button"
-                        onclick="openGlobalModal('qa-startup-modal')">
-                        <i class="fas fa-rocket"></i> New Startup
-                    </button>
-                </div>
-            </div>
-        </aside>
 
         <!-- Overlay for drawers -->
         <div id="drawer-overlay" class="overlay"></div>
@@ -846,10 +766,14 @@
         // Helper to handle QA clicks
         function openGlobalModal(modalId) {
             // Close drawer first
-            document.getElementById('quick-drawer').classList.remove('open');
-            document.getElementById('drawer-overlay').classList.remove('open');
+            const quickDrawer = document.getElementById('quick-drawer');
+            if (quickDrawer) quickDrawer.classList.remove('open');
 
-            document.getElementById(modalId).classList.add('open');
+            const overlay = document.getElementById('drawer-overlay');
+            if (overlay) overlay.classList.remove('open');
+
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('open');
 
             // Init logic
             if (modalId === 'qa-task-modal') {

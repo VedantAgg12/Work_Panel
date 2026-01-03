@@ -398,6 +398,19 @@
 
     <h2>General</h2>
     <div class="widget-section" id="general-section">
+        <!-- Workspace Widget -->
+        <div class="widget" draggable="true" id="widget-workspaces">
+            <div class="widget-header">
+                <div class="widget-title" onclick="navigateToModule('workspace')" style="cursor:pointer"><i
+                        class="fas fa-layer-group"></i> Workspaces</div>
+            </div>
+            <div class="widget-content" id="workspace-widget-body"
+                style="text-align:center; display:flex; flex-direction:column; justify-content:center;">
+                <div style="font-size: 2rem; font-weight: bold;" id="workspace-count">-</div>
+                <div style="font-size: 0.9rem; opacity: 0.7;">Created</div>
+                <div style="font-size: 0.8rem; opacity: 0.5; margin-top: 5px;" id="workspace-last">Latest: -</div>
+            </div>
+        </div>
         <!-- Modules Widget -->
         <div class="widget" draggable="true" id="widget-modules">
             <div class="widget-header">
@@ -461,6 +474,7 @@
 
     <h2>Applications</h2>
     <div class="widget-section" id="modules-section">
+
         <!-- Task Analytics Widget -->
         <div class="widget widget-wide" draggable="true" id="widget-task-analytics">
             <div class="widget-header">
@@ -1139,6 +1153,36 @@
             // Short delay to ensuring Chart.js script execution if racing
             setTimeout(loadTaskAnalytics, 100);
         }
+
+        function updateWorkspaceWidget() {
+            fetch('/api/storage/workspaces.json')
+                .then(res => res.json())
+                .then(data => {
+                    const countEl = document.getElementById('workspace-count');
+                    const lastEl = document.getElementById('workspace-last');
+
+                    if (Array.isArray(data)) {
+                        if (countEl) countEl.textContent = data.length;
+                        const latest = data.length > 0 ? data[data.length - 1] : null;
+
+                        if (latest && lastEl) {
+                            lastEl.textContent = 'Latest: ' + (latest.name || 'Untitled');
+                        } else {
+                            if (lastEl) lastEl.textContent = 'Latest: -';
+                        }
+                    } else {
+                        if (countEl) countEl.textContent = '0';
+                        if (lastEl) lastEl.textContent = 'Latest: -';
+                    }
+                })
+                .catch(err => {
+                    const countEl = document.getElementById('workspace-count');
+                    if (countEl) countEl.textContent = '0';
+                    const lastEl = document.getElementById('workspace-last');
+                    if (lastEl) lastEl.textContent = 'Latest: -';
+                });
+        }
+        updateWorkspaceWidget();
 
     </script>
 </body>

@@ -36,6 +36,7 @@ def load_modules():
         "study_tracker": "fa-graduation-cap",
         "idea_vault": "fa-lightbulb",
         "event_manager": "fa-calendar-alt",
+        "workspace": "fa-layer-group",
         "default": "fa-puzzle-piece"
     }
 
