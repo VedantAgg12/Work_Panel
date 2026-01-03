@@ -13,6 +13,7 @@
             --bg-color: #f4f6f8;
             --card-bg: #fff;
             --border-color: rgba(0, 0, 0, 0.1);
+            --primary-color: #1a73e8;
         }
 
         [data-theme="dark"] {
@@ -30,9 +31,26 @@
             height: 100vh;
             box-sizing: border-box;
             overflow: hidden;
-            /* Fix horizontal scroll */
             display: flex;
             flex-direction: column;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
         }
 
         /* Header */
@@ -55,7 +73,7 @@
         }
 
         .btn-primary {
-            background: #1a73e8;
+            background: var(--primary-color);
             color: white;
             border: none;
             padding: 8px 16px;
@@ -98,7 +116,6 @@
             overflow-y: auto;
             flex: 1;
             padding-right: 5px;
-            /* Scrollbar space */
         }
 
         #detail-view {
@@ -107,6 +124,7 @@
             flex: 1;
             height: 100%;
             overflow: hidden;
+            position: relative; /* For overlays/tabs */
         }
 
         /* Workspace Card */
@@ -142,7 +160,6 @@
             font-size: 1.1rem;
             margin-bottom: 5px;
             padding-right: 50px;
-            /* Space for actions */
         }
 
         .ws-desc {
@@ -170,7 +187,7 @@
             flex: 1;
             overflow: hidden;
             min-height: 0;
-            /* Important for nested scroll */
+            padding-bottom: 10px;
         }
 
         .col {
@@ -198,7 +215,6 @@
             overflow-y: auto;
             flex: 1;
             overflow-x: hidden;
-            /* Fix horizontal scroll */
         }
 
         /* Sources List */
@@ -231,7 +247,6 @@
             font-size: 1rem;
             line-height: 1.5;
             box-sizing: border-box;
-            /* Fix padding issues */
         }
 
         /* Module Buttons */
@@ -326,6 +341,84 @@
             border-radius: 6px;
             cursor: pointer;
         }
+
+        /* Responsive Mobile Layout */
+        #mobile-tabs {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+                gap: 0;
+                padding-bottom: 60px; /* Space for tabs */
+            }
+
+            .col {
+                display: none; /* Hidden by default toggled by bits */
+                border-radius: 0;
+                border: none;
+                height: 100%;
+            }
+
+            .col.active {
+                display: flex;
+            }
+
+            /* Show editor by default */
+            /* We will handle this with JS adding 'active' class */
+            
+            #mobile-tabs {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 60px;
+                background: var(--card-bg);
+                border-top: 1px solid var(--border-color);
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+                z-index: 900;
+                justify-content: space-around;
+                align-items: center;
+            }
+
+            .tab-btn {
+                background: transparent;
+                border: none;
+                color: var(--text-color);
+                opacity: 0.6;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+                font-size: 0.75rem;
+                padding: 10px;
+                flex: 1;
+            }
+
+            .tab-btn i {
+                font-size: 1.2rem;
+            }
+
+            .tab-btn.active {
+                opacity: 1;
+                color: var(--primary-color);
+            }
+            
+            /* Hide back/edit buttons on mobile detail header to save space? 
+               Or maybe just styling adjustments.
+            */
+            #page-title {
+                font-size: 1.2rem;
+            }
+            
+            body {
+                padding: 10px; /* Reduces padding on mobile */
+            }
+        }
+
     </style>
 </head>
 
@@ -339,10 +432,10 @@
             </button>
             <div id="detail-actions" style="display:none; gap:10px;">
                 <button class="btn-outline" onclick="editCurrentWorkspace()">
-                    <i class="fas fa-edit"></i> Edit
+                    <i class="fas fa-edit"></i> <span class="hide-mobile">Edit</span>
                 </button>
                 <button class="btn-outline" onclick="closeWorkspace()">
-                    <i class="fas fa-arrow-left"></i> Back
+                    <i class="fas fa-arrow-left"></i> <span class="hide-mobile">Back</span>
                 </button>
             </div>
         </div>
@@ -357,7 +450,7 @@
     <div id="detail-view">
         <div class="detail-grid">
             <!-- Sources -->
-            <div class="col">
+            <div class="col" id="col-wrapper-sources">
                 <div class="col-header">Sources</div>
                 <div class="col-content" id="col-sources">
                     <!-- Links -->
@@ -365,7 +458,7 @@
             </div>
 
             <!-- Workspace Editor -->
-            <div class="col">
+            <div class="col active" id="col-wrapper-editor">
                 <div class="col-header">
                     Workspace
                     <span style="font-size:0.7rem; opacity:0.6;" id="save-status"></span>
@@ -376,12 +469,28 @@
             </div>
 
             <!-- Modules -->
-            <div class="col">
+            <div class="col" id="col-wrapper-modules">
                 <div class="col-header">Actions</div>
                 <div class="col-content" id="col-modules">
                     <!-- Action buttons -->
                 </div>
             </div>
+        </div>
+
+        <!-- Mobile Navigation Tabs -->
+        <div id="mobile-tabs">
+            <button class="tab-btn" onclick="switchMobileTab('sources', this)">
+                <i class="fas fa-link"></i>
+                Sources
+            </button>
+            <button class="tab-btn active" onclick="switchMobileTab('editor', this)">
+                <i class="fas fa-pen-square"></i>
+                Workspace
+            </button>
+            <button class="tab-btn" onclick="switchMobileTab('modules', this)">
+                <i class="fas fa-th-large"></i>
+                Actions
+            </button>
         </div>
     </div>
 
@@ -725,6 +834,9 @@
                 document.getElementById('detail-actions').style.display = 'flex';
                 document.getElementById('page-title').textContent = ws.name;
 
+                // Reset Tab to Editor (default)
+                switchMobileTab('editor');
+
                 // Populate Columns
                 // 1. Sources
                 const sourceContainer = document.getElementById('col-sources');
@@ -772,15 +884,6 @@
                 return;
             }
 
-            // Define all possible buttons
-            // Task Manager - New Task
-            // Idea Vault - New Idea
-            // Notes - New Note
-            // Startup Planner - New Startup
-            // Story Studio - New Element and New Story
-            // Study Tracker - New Goal and New Subject
-            // Event Manager - New Event
-
             const buttonDefs = [];
 
             if (modules.includes('task_manager')) {
@@ -788,6 +891,7 @@
             }
             if (modules.includes('idea_vault')) {
                 buttonDefs.push({ icon: 'fa-lightbulb', label: 'New Idea', click: "triggerGlobal('qa-idea-modal')" });
+                buttonDefs.push({ icon: 'fa-folder-plus', label: 'New Collection', click: "triggerGlobal('qa-idea-modal')" });
             }
             if (modules.includes('notes')) {
                 buttonDefs.push({ icon: 'fa-sticky-note', label: 'New Note', click: "triggerGlobal('qa-note-global-modal')" });
@@ -817,17 +921,43 @@
         }
 
         window.triggerGlobal = function (modalId) {
-            if (window.parent && window.parent.openGlobalModal) {
-                try {
-                    window.parent.openGlobalModal(modalId);
-                } catch (e) {
-                    console.error("Cannot call parent modal directly, trying postMessage", e);
-                    window.parent.postMessage({ type: 'open-modal', modalId: modalId }, '*');
-                }
-            } else if (window.parent) {
-                // Fallback to postMessage if direct access is blocked
-                window.parent.postMessage({ type: 'open-modal', modalId: modalId }, '*');
+             if (window.parent && window.parent.openGlobalModal) {
+                 try {
+                     window.parent.openGlobalModal(modalId);
+                 } catch(e) {
+                     console.error("Cannot call parent modal directly, trying postMessage", e);
+                     window.parent.postMessage({ type: 'open-modal', modalId: modalId }, '*');
+                 }
+             } else if (window.parent) {
+                  // Fallback to postMessage if direct access is blocked
+                  window.parent.postMessage({ type: 'open-modal', modalId: modalId }, '*');
+             }
+        }
+        
+        // Mobile Tab Switcher
+        function switchMobileTab(tabKey, btnEl) {
+            // tabKey: 'sources', 'editor', 'modules'
+            
+            // Only effective on mobile, but harmless to set active classes anyway 
+            // as desktop CSS ignores them for display logic (mostly)
+            
+            // Update Tab Buttons
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs.forEach(t => t.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            else {
+                // Find button by index/logic if not passed
+                if(tabKey === 'sources') tabs[0].classList.add('active');
+                if(tabKey === 'editor') tabs[1].classList.add('active');
+                if(tabKey === 'modules') tabs[2].classList.add('active');
             }
+            
+            // Update Columns
+            document.querySelectorAll('.col').forEach(c => c.classList.remove('active'));
+            
+            if (tabKey === 'sources') document.getElementById('col-wrapper-sources').classList.add('active');
+            if (tabKey === 'editor') document.getElementById('col-wrapper-editor').classList.add('active');
+            if (tabKey === 'modules') document.getElementById('col-wrapper-modules').classList.add('active');
         }
 
         // Init

@@ -45,6 +45,11 @@ function setupEventListeners() {
         filterCol.addEventListener('change', render);
     }
 
+    const filterSearch = document.getElementById('filter-search');
+    if (filterSearch) {
+        filterSearch.addEventListener('input', render);
+    }
+
     const selectRoot = document.getElementById('select-root-node');
     if (selectRoot) {
         selectRoot.addEventListener('change', (e) => {
@@ -318,6 +323,7 @@ function renderGridView(container) {
     grid.className = 'idea-grid';
 
     const filterVal = document.getElementById('filter-collection')?.value || 'all';
+    const searchVal = document.getElementById('filter-search')?.value.toLowerCase() || '';
 
     // Sort by created desc (pinned items items logic could be added later)
     let sorted = [...ideas].sort((a, b) => new Date(b.created) - new Date(a.created));
@@ -328,6 +334,10 @@ function renderGridView(container) {
         } else {
             sorted = sorted.filter(i => i.collectionId === filterVal);
         }
+    }
+
+    if (searchVal) {
+        sorted = sorted.filter(i => i.title.toLowerCase().includes(searchVal));
     }
 
     sorted.forEach(idea => {
@@ -374,7 +384,18 @@ function renderListView(container) {
     `;
     list.appendChild(header);
 
-    const sorted = [...ideas].sort((a, b) => new Date(b.created) - new Date(a.created));
+    const filterVal = document.getElementById('filter-collection')?.value || 'all';
+    const searchVal = document.getElementById('filter-search')?.value.toLowerCase() || '';
+
+    let sorted = [...ideas].sort((a, b) => new Date(b.created) - new Date(a.created));
+
+    if (filterVal !== 'all') {
+        sorted = sorted.filter(i => i.collectionId === filterVal);
+    }
+
+    if (searchVal) {
+        sorted = sorted.filter(i => i.title.toLowerCase().includes(searchVal));
+    }
 
     sorted.forEach(idea => {
         const item = document.createElement('div');
